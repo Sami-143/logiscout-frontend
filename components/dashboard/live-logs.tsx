@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -84,6 +84,14 @@ export function LiveLogs({ projectName }: { projectName?: string }) {
   const [selectedLevel, setSelectedLevel] = useState<string>("all")
   const [selectedService, setSelectedService] = useState<string>("all")
   const [autoScroll, setAutoScroll] = useState(true)
+  const topSentinelRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to top (newest log) whenever a new log arrives
+  useEffect(() => {
+    if (autoScroll) {
+      topSentinelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    }
+  }, [logs, autoScroll])
 
   useEffect(() => {
     if (!isStreaming) return
@@ -204,6 +212,7 @@ export function LiveLogs({ projectName }: { projectName?: string }) {
       {/* Logs List */}
       <ScrollArea className="flex-1 bg-background">
         <div className="divide-y divide-border">
+          <div ref={topSentinelRef} />
           {filteredLogs.map((log) => {
             const LogIcon = LOG_LEVELS[log.level].icon
             return (

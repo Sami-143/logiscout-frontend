@@ -29,7 +29,7 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const { toast } = useToast()
-  const { isLoading, error, isAuthenticated, user } = useAppSelector((state) => state.auth)
+  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth)
 
   // Clear error on component mount
   useEffect(() => {
@@ -45,7 +45,7 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
         router.push("/dashboard")
       }
     }
-  }, [isAuthenticated, onSignIn, router, user])
+  }, [isAuthenticated, onSignIn, router])
 
   // Show error toast
   useEffect(() => {

@@ -40,7 +40,7 @@ export function OAuthCallback() {
     // Verify session with the backend and update Redux state.
     dispatch(checkSession())
       .unwrap()
-      .then((result) => {
+      .then(() => {
         log.info({ provider }, "OAuth sign-in successful")
         toast({
           title: "Signed in",

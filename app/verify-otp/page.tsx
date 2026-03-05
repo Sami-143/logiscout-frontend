@@ -5,7 +5,7 @@ import { VerifyOTP } from "@/components/auth/verify-otp"
 
 export default function VerifyOTPPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" />}>
       <VerifyOTP />
     </Suspense>
   )

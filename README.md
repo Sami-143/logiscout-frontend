@@ -181,7 +181,7 @@ pnpm install
 
 ### Environment Variables
 
-Create a `.env.local` file in the project root:
+Create a `.env` file in the project root:
 
 ```env
 # Backend API base URL (defaults to http://localhost:8000 if not set)
