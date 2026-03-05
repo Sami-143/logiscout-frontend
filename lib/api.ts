@@ -204,6 +204,14 @@ export const authAPI = {
     const response = await api.post("/api/auth/resend-otp", { email })
     return response.data
   },
+
+  /**
+   * Exchange a JWT (from OAuth redirect fragment) for an httpOnly cookie session
+   */
+  exchangeSession: async (token: string): Promise<ApiResponse<UserData>> => {
+    const response = await api.post("/api/auth/session", { token })
+    return response.data
+  },
 }
 
 // ============================================
