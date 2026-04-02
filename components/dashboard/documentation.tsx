@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -139,19 +139,19 @@ function SubHeading({ id, children }: { id: string; children: React.ReactNode })
 /*  Sidebar navigation structure                                       */
 /* ------------------------------------------------------------------ */
 
-const SIDEBAR_SECTIONS = [
+const PYTHON_SIDEBAR_SECTIONS = [
   {
-    label: "Getting Started",
+    label: "Overview",
     items: [
       { id: "introduction", label: "Introduction", icon: BookOpen },
-      { id: "quickstart", label: "Quick Start", icon: Zap },
-      { id: "installation", label: "Installation", icon: Package },
       { id: "concepts", label: "Core Concepts", icon: Layers },
     ],
   },
   {
-    label: "Library Guide",
+    label: "Python SDK",
     items: [
+      { id: "quickstart", label: "Quick Start", icon: Zap },
+      { id: "installation", label: "Installation", icon: Package },
       { id: "initialization", label: "Initialization", icon: Settings },
       { id: "logging", label: "Logging", icon: Terminal },
       { id: "middleware", label: "Middleware", icon: Server },
@@ -159,21 +159,11 @@ const SIDEBAR_SECTIONS = [
     ],
   },
   {
-    label: "Framework Integration",
+    label: "Frameworks",
     items: [
       { id: "fastapi", label: "FastAPI", icon: Zap },
       { id: "flask", label: "Flask", icon: Globe },
       { id: "django", label: "Django", icon: Database },
-    ],
-  },
-  {
-    label: "Node.js Guide",
-    items: [
-      { id: "nodejs-quickstart", label: "Quick Start (Node.js)", icon: Zap },
-      { id: "nodejs-logging", label: "Logging (Node.js)", icon: Terminal },
-      { id: "nodejs-errors", label: "Error Handling", icon: AlertTriangle },
-      { id: "nodejs-express", label: "Express Integration", icon: Server },
-      { id: "nodejs-api-ref", label: "API Reference (Node.js)", icon: Code2 },
     ],
   },
   {
@@ -186,7 +176,45 @@ const SIDEBAR_SECTIONS = [
     ],
   },
   {
-    label: "API Reference",
+    label: "REST API",
+    items: [
+      { id: "api-overview", label: "API Overview", icon: Code2 },
+      { id: "api-auth", label: "Authentication", icon: Shield },
+      { id: "api-logs", label: "Logs API", icon: FileText },
+      { id: "api-incidents", label: "Incidents API", icon: AlertTriangle },
+    ],
+  },
+]
+
+const NODEJS_SIDEBAR_SECTIONS = [
+  {
+    label: "Overview",
+    items: [
+      { id: "introduction", label: "Introduction", icon: BookOpen },
+      { id: "concepts", label: "Core Concepts", icon: Layers },
+    ],
+  },
+  {
+    label: "Node.js SDK",
+    items: [
+      { id: "nodejs-quickstart", label: "Quick Start", icon: Zap },
+      { id: "nodejs-logging", label: "Logging", icon: Terminal },
+      { id: "nodejs-errors", label: "Error Handling", icon: AlertTriangle },
+      { id: "nodejs-express", label: "Express Integration", icon: Server },
+      { id: "nodejs-api-ref", label: "API Reference", icon: Code2 },
+    ],
+  },
+  {
+    label: "Platform",
+    items: [
+      { id: "dashboard", label: "Dashboard", icon: BarChart3 },
+      { id: "incidents", label: "Incidents", icon: AlertTriangle },
+      { id: "alerting", label: "Alerting & Notifications", icon: Bell },
+      { id: "integrations", label: "Integrations", icon: Webhook },
+    ],
+  },
+  {
+    label: "REST API",
     items: [
       { id: "api-overview", label: "API Overview", icon: Code2 },
       { id: "api-auth", label: "Authentication", icon: Shield },
@@ -203,7 +231,62 @@ const SIDEBAR_SECTIONS = [
 export function Documentation() {
   const [activeSection, setActiveSection] = useState("introduction")
   const [searchQuery, setSearchQuery] = useState("")
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sdkTab, setSdkTab] = useState<"python" | "nodejs">("python")
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const sidebarRef = useRef<HTMLElement>(null)
+  const sectionIdsRef = useRef<string[]>([])
+
+  const activeSections = sdkTab === "python" ? PYTHON_SIDEBAR_SECTIONS : NODEJS_SIDEBAR_SECTIONS
+
+  useEffect(() => {
+    sectionIdsRef.current = activeSections.flatMap((s) => s.items.map((i) => i.id))
+  }, [sdkTab]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Scroll-spy: on every scroll tick, find the last section whose top edge has
+  // passed the top 30% of the container and mark it active.  This approach uses
+  // getBoundingClientRect() which works reliably with any custom scroll root.
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const onScroll = () => {
+      const ids = sectionIdsRef.current
+      const containerTop = container.getBoundingClientRect().top
+      // "activation line" = 30% down from the top of the scroll pane
+      const activationY = containerTop + container.clientHeight * 0.3
+
+      let current = ids[0]
+      for (const id of ids) {
+        const el = document.getElementById(id)
+        if (!el) continue
+        if (el.getBoundingClientRect().top <= activationY) {
+          current = id
+        } else {
+          // sections are in document order — no need to keep scanning
+          break
+        }
+      }
+      if (current) setActiveSection(current)
+    }
+
+    container.addEventListener("scroll", onScroll, { passive: true })
+    onScroll()
+    return () => container.removeEventListener("scroll", onScroll)
+  }, [sdkTab]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-scroll the sidebar so the active nav item is always visible
+  useEffect(() => {
+    const sidebar = sidebarRef.current
+    if (!sidebar) return
+    const activeBtn = sidebar.querySelector<HTMLElement>(`[data-section="${activeSection}"]`)
+    if (activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", block: "nearest" })
+  }, [activeSection])
+
+  const switchTab = (tab: "python" | "nodejs") => {
+    setSdkTab(tab)
+    setActiveSection("introduction")
+    scrollContainerRef.current?.scrollTo({ top: 0 })
+  }
 
   const scrollTo = (id: string) => {
     setActiveSection(id)
@@ -215,10 +298,37 @@ export function Documentation() {
     <div className="flex h-[calc(100vh-4rem)]">
       {/* ---- Doc Sidebar ---- */}
       <aside
+        ref={sidebarRef}
         className={`hidden xl:flex flex-col w-72 border-r border-border bg-card/50 overflow-y-auto flex-shrink-0 transition-all`}
       >
-        {/* Search */}
-        <div className="sticky top-0 bg-card/80 backdrop-blur-md z-10 p-4 border-b border-border">
+        {/* SDK Tab Picker + Search */}
+        <div className="sticky top-0 bg-card/80 backdrop-blur-md z-10 p-3 space-y-2.5 border-b border-border">
+          {/* Python / Node.js toggle */}
+          <div className="flex rounded-lg border border-border p-0.5 bg-muted/40 gap-0.5">
+            <button
+              onClick={() => switchTab("python")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[12px] font-semibold transition-all ${
+                sdkTab === "python"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Terminal className="h-3.5 w-3.5" />
+              Python
+            </button>
+            <button
+              onClick={() => switchTab("nodejs")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[12px] font-semibold transition-all ${
+                sdkTab === "nodejs"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Server className="h-3.5 w-3.5" />
+              Node.js
+            </button>
+          </div>
+          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -232,7 +342,7 @@ export function Documentation() {
         </div>
 
         <nav className="p-3 space-y-5">
-          {SIDEBAR_SECTIONS.map((section) => {
+          {activeSections.map((section) => {
             const filtered = section.items.filter((i) =>
               i.label.toLowerCase().includes(searchQuery.toLowerCase())
             )
@@ -247,13 +357,17 @@ export function Documentation() {
                   return (
                     <button
                       key={item.id}
+                      data-section={item.id}
                       onClick={() => scrollTo(item.id)}
-                      className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                      className={`relative flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
                         activeSection === item.id
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       }`}
                     >
+                      {activeSection === item.id && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full bg-primary" />
+                      )}
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       {item.label}
                     </button>
@@ -266,7 +380,7 @@ export function Documentation() {
       </aside>
 
       {/* ---- Main Content ---- */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 md:px-10 py-10">
           {/* Hero / Header */}
           <div className="mb-10">
@@ -274,18 +388,18 @@ export function Documentation() {
               <BookOpen className="h-4 w-4" />
               <span>Documentation</span>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-foreground font-medium">LogiScout Logger</span>
+              <span className="text-foreground font-medium">LogiScout Platform</span>
             </div>
             <div className="flex items-start justify-between gap-6">
               <div>
                 <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
-                  LogiScout Logger
+                  LogiScout Documentation
                 </h1>
                 <p className="mt-3 text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                  A robust structured logging library for Python that seamlessly integrates with the
-                  LogiScout incident management platform. Built on{" "}
-                  <InlineCode>structlog</InlineCode> for context-rich, JSON-formatted,
-                  production-ready logging.
+                  Everything you need to integrate LogiScout into your application — SDK guides
+                  for <strong className="text-foreground">Python</strong> and{" "}
+                  <strong className="text-foreground">Node.js</strong>, framework integrations,
+                  platform configuration, and the full REST API reference.
                 </p>
               </div>
               <Badge variant="outline" className="flex-shrink-0 gap-1.5 px-3 py-1.5 text-xs border-primary/30 text-primary">
@@ -296,17 +410,25 @@ export function Documentation() {
 
             {/* Quick links */}
             <div className="flex flex-wrap gap-3 mt-6">
-              <Button variant="default" size="sm" className="gap-2 h-9" onClick={() => scrollTo("quickstart")}>
-                <Zap className="h-4 w-4" />
-                Quick Start
+              <Button
+                variant={sdkTab === "python" ? "default" : "outline"}
+                size="sm" className="gap-2 h-9"
+                onClick={() => switchTab("python")}
+              >
+                <Terminal className="h-4 w-4" />
+                Python SDK
+              </Button>
+              <Button
+                variant={sdkTab === "nodejs" ? "default" : "outline"}
+                size="sm" className="gap-2 h-9"
+                onClick={() => switchTab("nodejs")}
+              >
+                <Server className="h-4 w-4" />
+                Node.js SDK
               </Button>
               <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() => scrollTo("api-overview")}>
                 <Code2 className="h-4 w-4" />
                 API Reference
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2 h-9">
-                <ExternalLink className="h-4 w-4" />
-                PyPI Package
               </Button>
               <Button variant="outline" size="sm" className="gap-2 h-9">
                 <ExternalLink className="h-4 w-4" />
@@ -324,19 +446,49 @@ export function Documentation() {
           <section id="introduction">
             <SectionHeading id="introduction-heading">Introduction</SectionHeading>
             <p className="text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">LogiScout Logger</strong> is a Python library
-              purpose-built for modern observability workflows. It wraps the powerful{" "}
-              <InlineCode>structlog</InlineCode> library to give you structured, contextual,
-              JSON-formatted logs out of the box — whether you&apos;re building a microservice,
-              a monolith, or a simple script.
+              <strong className="text-foreground">LogiScout</strong> is an AI-powered observability
+              platform that unifies structured logging, real-time incident detection, and automated
+              root-cause analysis into a single, developer-friendly system. It provides native SDKs
+              for <strong className="text-foreground">Python</strong> and{" "}
+              <strong className="text-foreground">Node.js</strong> that integrate with every major
+              web framework — FastAPI, Flask, Django, and Express — with zero boilerplate.
             </p>
             <p className="text-muted-foreground leading-relaxed mt-4">
-              When paired with the LogiScout platform, logs are shipped in real-time to the
-              LogiScout ingestion pipeline where they are indexed, correlated with incidents, and
-              made searchable through the Live Logs dashboard. A built-in RAG-powered AI engine
-              cross-references incoming errors against historical incident data to provide
-              automated root-cause analysis and suggested remediation steps.
+              When your application ships logs to LogiScout, they flow through a token-authenticated
+              ingestion pipeline that indexes, enriches, and correlates them with incidents in
+              real-time. A RAG-powered AI engine continuously cross-references incoming error
+              patterns against a vector database of historical incidents to generate automated
+              root-cause analyses and step-by-step remediation suggestions — reducing mean time to
+              resolution by up to 80%.
             </p>
+
+            {/* Architecture diagram */}
+            <div className="mt-8 rounded-xl border border-border bg-muted/20 p-5">
+              <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" />
+                Platform Architecture
+              </h4>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 text-xs">
+                {[
+                  { label: "Your App", sub: "Python / Node.js SDK", icon: Code2, color: "bg-blue-500/10 border-blue-500/20 text-blue-600" },
+                  { label: "Ingestion API", sub: "Token-auth · HTTPS", icon: Shield, color: "bg-purple-500/10 border-purple-500/20 text-purple-600" },
+                  { label: "Pipeline", sub: "Index · Correlate · Enrich", icon: Cpu, color: "bg-yellow-500/10 border-yellow-500/20 text-yellow-600" },
+                  { label: "AI Engine", sub: "RAG root-cause analysis", icon: Zap, color: "bg-pink-500/10 border-pink-500/20 text-pink-600" },
+                  { label: "Dashboard", sub: "Logs · Incidents · Analytics", icon: BarChart3, color: "bg-green-500/10 border-green-500/20 text-green-600" },
+                ].map((node, i, arr) => (
+                  <div key={node.label} className="flex sm:flex-row items-center flex-1 gap-2 sm:gap-0">
+                    <div className={`flex flex-col items-center justify-center rounded-xl border p-3 flex-1 text-center ${node.color}`}>
+                      <node.icon className="h-4 w-4 mb-1.5" />
+                      <span className="font-semibold text-[11px] leading-tight">{node.label}</span>
+                      <span className="text-[10px] opacity-60 mt-0.5 leading-tight">{node.sub}</span>
+                    </div>
+                    {i < arr.length - 1 && (
+                      <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/40 mx-1.5 hidden sm:block" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Feature Grid */}
             <div className="grid sm:grid-cols-2 gap-4 mt-8">
@@ -386,6 +538,29 @@ export function Documentation() {
               ))}
             </div>
           </section>
+
+          {sdkTab === "python" && <>
+          {/* ============================================================ */}
+          {/*  PYTHON SDK — section banner                                  */}
+          {/* ============================================================ */}
+
+          <div className="mt-14 mb-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex-shrink-0">
+                <Terminal className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-bold text-foreground">Python SDK</h2>
+                  <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-500 px-2 h-5">
+                    logiscout-logger
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">PyPI &middot; Python 3.9+ &middot; FastAPI &middot; Flask &middot; Django</p>
+              </div>
+            </div>
+            <Separator />
+          </div>
 
           {/* ============================================================ */}
           {/*  QUICK START                                                  */}
@@ -524,6 +699,8 @@ print(logiscout_logger.__version__)  # → 1.0.0`}
             </Callout>
           </section>
 
+          </>}
+
           {/* ============================================================ */}
           {/*  CORE CONCEPTS                                                */}
           {/* ============================================================ */}
@@ -619,6 +796,7 @@ print(logiscout_logger.__version__)  # → 1.0.0`}
             </div>
           </section>
 
+          {sdkTab === "python" && <>
           {/* ============================================================ */}
           {/*  INITIALIZATION                                               */}
           {/* ============================================================ */}
@@ -1053,16 +1231,41 @@ def user_profile(request, user_id):
             />
           </section>
 
+          </>}
+
+          {sdkTab === "nodejs" && <>
+          {/* ============================================================ */}
+          {/*  NODE.JS SDK — section banner                                 */}
+          {/* ============================================================ */}
+
+          <div className="mt-14 mb-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-500/10 text-green-500 flex-shrink-0">
+                <Server className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-bold text-foreground">Node.js SDK</h2>
+                  <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-500 px-2 h-5">
+                    logiscout
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">npm &middot; Node.js 18+ &middot; TypeScript &middot; Express</p>
+              </div>
+            </div>
+            <Separator />
+          </div>
+
           {/* ============================================================ */}
           {/*  NODE.JS QUICK START                                          */}
           {/* ============================================================ */}
 
           <section id="nodejs-quickstart">
-            <SectionHeading id="nodejs-quickstart-heading">Quick Start (Node.js)</SectionHeading>
+            <SectionHeading id="nodejs-quickstart-heading">Quick Start</SectionHeading>
             <p className="text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">LogiScout</strong> is also available as a
-              structured logging library for <strong className="text-foreground">Node.js</strong>{" "}
-              applications with automatic correlation tracking and middleware support.
+              Get the <strong className="text-foreground">logiscout</strong> npm package running
+              in your Node.js or TypeScript application in under five minutes. The SDK supports
+              automatic correlation tracking and optional server-side log transport.
             </p>
 
             <div className="mt-6 space-y-6">
@@ -1366,6 +1569,8 @@ logger.critical(message, metadata?, options?)`}
 app.use(createCorrelationMiddleware());`}
             />
           </section>
+
+          </>}
 
           {/* ============================================================ */}
           {/*  DASHBOARD                                                    */}
