@@ -111,7 +111,7 @@ function DashboardContent() {
       case "overview":
         return <DashboardOverview />
       case "logs":
-        return <LiveLogs projectName={selectedProject?.name} />
+        return <LiveLogs projectId={"1"} projectName={selectedProject?.name} />
       case "settings":
         return selectedProject ? (
           <TokenManagement projectId={selectedProject.id} projectName={selectedProject.name} />

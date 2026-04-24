@@ -196,7 +196,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:4001](http://localhost:4001) in your browser.
 
 ---
 
