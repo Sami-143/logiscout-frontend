@@ -280,6 +280,7 @@ export interface ProjectData {
   created_at: string
   updated_at: string
   token_count: number
+  webhook_base_url: string | null
 }
 
 export interface TokenData {
@@ -326,7 +327,7 @@ export const projectAPI = {
   /** Update a project */
   update: async (
     projectId: string,
-    data: { name?: string; description?: string; status?: string }
+    data: { name?: string; description?: string; status?: string; webhook_base_url?: string }
   ): Promise<ApiResponse<ProjectData>> => {
     const response = await api.patch(`/api/projects/${projectId}`, data)
     return response.data

@@ -58,6 +58,7 @@ export interface Project {
   token_count: number
   created_at: string
   updated_at: string
+  webhook_base_url: string | null
 }
 
 interface ProjectSelectorProps {
@@ -146,6 +147,7 @@ export function ProjectSelector({ onSelectProject, onViewDocs }: ProjectSelector
             token_count: p.token_count,
             created_at: p.created_at,
             updated_at: p.updated_at,
+            webhook_base_url: p.webhook_base_url ?? null,
           })),
         )
         log.info({ count: res.data.length }, "Projects loaded")
@@ -213,6 +215,7 @@ export function ProjectSelector({ onSelectProject, onViewDocs }: ProjectSelector
         token_count: 1,
         created_at: res.data.created_at,
         updated_at: res.data.updated_at,
+        webhook_base_url: res.data.webhook_base_url ?? null,
       }
 
       // 2) Auto-generate an API token

@@ -39,7 +39,6 @@ import {
   User,
   Sun,
   Moon,
-  Key,
 } from "lucide-react"
 import { useAppSelector, useAppDispatch } from "@/lib/store/hooks"
 import { logoutAsync } from "@/lib/store/authSlice"
@@ -158,7 +157,7 @@ const PROJECT_NAV_ITEMS = [
   { id: "logs", label: "Live Logs", icon: Terminal },
   { id: "incidents", label: "Incidents", icon: AlertTriangle },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "settings", label: "API Tokens", icon: Key },
+  { id: "settings", label: "Settings", icon: Settings },
   { id: "docs", label: "Documentation", icon: FileText },
 ]
 
