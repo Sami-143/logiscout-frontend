@@ -120,12 +120,6 @@ function DashboardContent() {
             <WebhookConfiguration
               projectId={selectedProject.id}
               projectName={selectedProject.name}
-              webhookBaseUrl={selectedProject.webhook_base_url ?? null}
-              onBaseUrlSaved={(url) => {
-                setSelectedProject((prev) =>
-                  prev ? { ...prev, webhook_base_url: url } : prev
-                )
-              }}
             />
           </div>
         ) : null

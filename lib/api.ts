@@ -378,6 +378,14 @@ export const projectAPI = {
     )
     return response.data
   },
+
+  /** Get the GitHub webhook URL for a project (computed server-side) */
+  getWebhookUrl: async (
+    projectId: string
+  ): Promise<ApiResponse<{ webhookUrl: string }>> => {
+    const response = await api.get(`/api/projects/${projectId}/github/webhook-url`)
+    return response.data
+  },
 }
 
 // ============================================
