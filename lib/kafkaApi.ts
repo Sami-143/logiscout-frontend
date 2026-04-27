@@ -1,25 +1,10 @@
-import api from "@/lib/api"
 import { createLogger } from "@/lib/logger"
 import axios from "axios";
 
-
-
-let environment = "local";
-console.log("Environment:", environment);
-
-let IMAGE_BASE_URL = "";
-let APP_URL = "";
-
-if (environment === "local") {
-  APP_URL = "http://localhost:3000/";
-} else if (environment === "prod") {
-  APP_URL = "http://47.130.208.43:3000/";
-} else{
-  APP_URL = "http://localhost:3000/"
-}
-
-
-const baseURL = `${APP_URL}`;
+const baseURL =
+  process.env.NEXT_PUBLIC_LOGS_API_URL ||
+  process.env.NEXT_PUBLIC_LIVE_LOGS_URL ||
+  "http://localhost:8001";
 const headers = {
   accept: "application/json",
   "Content-Type": "application/json",

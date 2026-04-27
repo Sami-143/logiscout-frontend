@@ -11,7 +11,11 @@ interface KafkaSocketHandlers {
 
 const log = createLogger("kafkaSocket")
 const DEFAULT_RECONNECT_DELAY_MS = 3000
-const SOCKET_BASE_URL = (process.env.NEXT_PUBLIC_LIVE_LOGS_URL || process.env.NEXT_PUBLIC_LOGS_API_URL || "http://localhost:3000")
+const SOCKET_BASE_URL = (
+  process.env.NEXT_PUBLIC_LIVE_LOGS_URL ||
+  process.env.NEXT_PUBLIC_LOGS_API_URL ||
+  "http://localhost:8001"
+)
   .replace(/^https:/, "wss:")
   .replace(/^http:/, "ws:")
 
