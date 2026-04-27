@@ -14,6 +14,7 @@ import {
   ProjectSelector,
   TokenManagement,
   WebhookConfiguration,
+  ChatContainer,
 } from "@/components/dashboard"
 import type { Project } from "@/components/dashboard"
 import { useToast } from "@/hooks/use-toast"
@@ -122,6 +123,10 @@ function DashboardContent() {
               projectName={selectedProject.name}
             />
           </div>
+        ) : null
+      case "chat":
+        return selectedProject ? (
+          <ChatContainer projectId={selectedProject.id} projectName={selectedProject.name} />
         ) : null
       case "analytics":
         return <AnalyticsDashboard />

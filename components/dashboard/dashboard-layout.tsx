@@ -39,6 +39,7 @@ import {
   User,
   Sun,
   Moon,
+  MessageSquare,
 } from "lucide-react"
 import { useAppSelector, useAppDispatch } from "@/lib/store/hooks"
 import { logoutAsync } from "@/lib/store/authSlice"
@@ -155,6 +156,7 @@ const GLOBAL_NAV_ITEMS = [
 const PROJECT_NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "logs", label: "Live Logs", icon: Terminal },
+  { id: "chat", label: "AI Chat", icon: MessageSquare },
   { id: "incidents", label: "Incidents", icon: AlertTriangle },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Settings", icon: Settings },
