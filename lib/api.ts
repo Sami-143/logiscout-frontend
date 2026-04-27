@@ -280,6 +280,7 @@ export interface ProjectData {
   created_at: string
   updated_at: string
   token_count: number
+  webhook_base_url: string | null
 }
 
 export interface TokenData {
@@ -326,7 +327,7 @@ export const projectAPI = {
   /** Update a project */
   update: async (
     projectId: string,
-    data: { name?: string; description?: string; status?: string }
+    data: { name?: string; description?: string; status?: string; webhook_base_url?: string }
   ): Promise<ApiResponse<ProjectData>> => {
     const response = await api.patch(`/api/projects/${projectId}`, data)
     return response.data
@@ -375,6 +376,14 @@ export const projectAPI = {
     const response = await api.patch(
       `/api/projects/${projectId}/tokens/${tokenId}/disable`
     )
+    return response.data
+  },
+
+  /** Get the GitHub webhook URL for a project (computed server-side) */
+  getWebhookUrl: async (
+    projectId: string
+  ): Promise<ApiResponse<{ webhookUrl: string }>> => {
+    const response = await api.get(`/api/projects/${projectId}/github/webhook-url`)
     return response.data
   },
 }

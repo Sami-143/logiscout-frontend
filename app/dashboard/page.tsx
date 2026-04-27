@@ -13,6 +13,7 @@ import {
   Documentation,
   ProjectSelector,
   TokenManagement,
+  WebhookConfiguration,
 } from "@/components/dashboard"
 import type { Project } from "@/components/dashboard"
 import { useToast } from "@/hooks/use-toast"
@@ -114,7 +115,13 @@ function DashboardContent() {
         return <LiveLogs projectId={"1"} projectName={selectedProject?.name} />
       case "settings":
         return selectedProject ? (
-          <TokenManagement projectId={selectedProject.id} projectName={selectedProject.name} />
+          <div className="space-y-8">
+            <TokenManagement projectId={selectedProject.id} projectName={selectedProject.name} />
+            <WebhookConfiguration
+              projectId={selectedProject.id}
+              projectName={selectedProject.name}
+            />
+          </div>
         ) : null
       case "analytics":
         return <AnalyticsDashboard />
