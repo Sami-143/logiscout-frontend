@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { fetchKafkaLogs, type LiveLogEntry, type LogLevel } from "@/lib/kafkaApi"
 import { createLogger } from "@/lib/logger"
 import { connectKafkaSocket } from "@/lib/kafkaSocket"
+import { getStoredSelectedProject } from "@/lib/selected-project"
 import { Play, Pause, Download, Filter, AlertCircle, AlertTriangle, Info, CheckCircle2, Terminal } from "lucide-react"
 
 type ConnectionState = "idle" | "connecting" | "connected" | "paused" | "disconnected" | "error"
@@ -64,6 +65,7 @@ function downloadLogs(projectName: string | undefined, logs: LiveLogEntry[]) {
 }
 
 export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
+  const [storedProject, setStoredProject] = useState<ReturnType<typeof getStoredSelectedProject>>(null)
   const [logs, setLogs] = useState<LiveLogEntry[]>([])
   const [isStreaming, setIsStreaming] = useState(true)
   const [selectedLevel, setSelectedLevel] = useState<string>("all")
@@ -71,15 +73,23 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
   const [autoScroll, setAutoScroll] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [connectionState, setConnectionState] = useState<ConnectionState>(projectId ? "connecting" : "idle")
+  const resolvedProjectId = projectId ?? storedProject?.id
+  const resolvedProjectName = projectName ?? storedProject?.name
+  const [connectionState, setConnectionState] = useState<ConnectionState>(resolvedProjectId ? "connecting" : "idle")
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null)
   const topSentinelRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
   useEffect(() => {
+    if (!projectId) {
+      setStoredProject(getStoredSelectedProject())
+    }
+  }, [projectId])
+
+  useEffect(() => {
     setSelectedService("all")
     setSelectedLevel("all")
-  }, [projectId])
+  }, [resolvedProjectId])
 
   useEffect(() => {
     if (autoScroll) {
@@ -91,7 +101,7 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
     let isCancelled = false
 
     async function loadInitialLogs() {
-      if (!projectId) {
+      if (!resolvedProjectId) {
         setLogs([])
         setLastUpdatedAt(null)
         setErrorMessage(null)
@@ -104,19 +114,19 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
       setErrorMessage(null)
 
       try {
-        const data = await fetchKafkaLogs(projectId)
+        const data = await fetchKafkaLogs(resolvedProjectId)
         if (isCancelled) return
 
         setLogs(Array.isArray(data) ? data.slice(0, MAX_LOGS) : [])
         setLastUpdatedAt(formatNow())
-        log.info({ projectId, count: Array.isArray(data) ? data.length : 0 }, "Initial live logs loaded")
+        log.info({ projectId: resolvedProjectId, count: Array.isArray(data) ? data.length : 0 }, "Initial live logs loaded")
       } catch (error) {
         if (isCancelled) return
 
         const message = error instanceof Error ? error.message : "Failed to load logs"
         setErrorMessage(message)
         setLogs([])
-        log.error({ projectId, error }, "Failed to load initial live logs")
+        log.error({ projectId: resolvedProjectId, error }, "Failed to load initial live logs")
         toast({
           title: "Live logs unavailable",
           description: message,
@@ -134,10 +144,10 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
     return () => {
       isCancelled = true
     }
-  }, [projectId, toast])
+  }, [resolvedProjectId, toast])
 
   useEffect(() => {
-    if (!projectId) {
+    if (!resolvedProjectId) {
       setConnectionState("idle")
       return
     }
@@ -147,14 +157,14 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
       return
     }
 
-    return connectKafkaSocket(projectId, {
+    return connectKafkaSocket(resolvedProjectId, {
       onConnecting: () => {
         setConnectionState("connecting")
       },
       onConnected: () => {
         setConnectionState("connected")
         setErrorMessage(null)
-        log.info({ projectId }, "Live log socket connected")
+        log.info({ projectId: resolvedProjectId }, "Live log socket connected")
       },
       onMessage: (incomingLog) => {
         setLogs((prev) => mergeIncomingLog(prev, incomingLog))
@@ -167,7 +177,7 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
         setConnectionState("disconnected")
       },
     })
-  }, [isStreaming, projectId])
+  }, [isStreaming, resolvedProjectId])
 
   const filteredLogs = logs.filter((logItem) => {
     if (selectedLevel !== "all" && logItem.level !== selectedLevel) return false
@@ -192,14 +202,14 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
             <div className="flex items-center gap-2">
               <Terminal className="w-5 h-5 text-primary" />
               <h2 className="text-base font-semibold text-foreground">Live Logs Stream</h2>
-              {projectName && (
+              {resolvedProjectName && (
                 <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                  {projectName}
+                  {resolvedProjectName}
                 </span>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {projectName ? `Real-time logs from ${projectName}` : "Select a project to start streaming logs"}
+              {resolvedProjectName ? `Real-time logs from ${resolvedProjectName}` : "Select a project to start streaming logs"}
             </p>
           </div>
 
@@ -209,7 +219,7 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
               size="sm"
               onClick={() => setIsStreaming((prev) => !prev)}
               className="gap-2"
-              disabled={!projectId}
+              disabled={!resolvedProjectId}
             >
               {isStreaming ? (
                 <>
@@ -227,7 +237,7 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
               variant="outline"
               size="sm"
               className="gap-2 bg-transparent"
-              onClick={() => downloadLogs(projectName, filteredLogs)}
+              onClick={() => downloadLogs(resolvedProjectName, filteredLogs)}
               disabled={!filteredLogs.length}
             >
               <Download className="w-3.5 h-3.5" />
@@ -288,21 +298,21 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
         <div className="divide-y divide-border">
           <div ref={topSentinelRef} />
 
-          {!projectId && (
+          {!resolvedProjectId && (
             <div className="px-6 py-10 text-sm text-muted-foreground">
               Select a project from the dashboard to load its first 100 logs and start the live stream.
             </div>
           )}
 
-          {projectId && isLoading && (
+          {resolvedProjectId && isLoading && (
             <div className="px-6 py-10 text-sm text-muted-foreground">Loading logs...</div>
           )}
 
-          {projectId && !isLoading && errorMessage && (
+          {resolvedProjectId && !isLoading && errorMessage && (
             <div className="px-6 py-10 text-sm text-destructive">{errorMessage}</div>
           )}
 
-          {projectId && !isLoading && !errorMessage && filteredLogs.length === 0 && (
+          {resolvedProjectId && !isLoading && !errorMessage && filteredLogs.length === 0 && (
             <div className="px-6 py-10 text-sm text-muted-foreground">No logs found for this project.</div>
           )}
 

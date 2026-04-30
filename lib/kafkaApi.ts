@@ -4,7 +4,7 @@ import axios from "axios";
 const baseURL =
   process.env.NEXT_PUBLIC_LOGS_API_URL ||
   process.env.NEXT_PUBLIC_LIVE_LOGS_URL ||
-  "http://localhost:8001";
+  "http://47.130.208.43:3000";
 const headers = {
   accept: "application/json",
   "Content-Type": "application/json",

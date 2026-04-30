@@ -14,7 +14,7 @@ const DEFAULT_RECONNECT_DELAY_MS = 3000
 const SOCKET_BASE_URL = (
   process.env.NEXT_PUBLIC_LIVE_LOGS_URL ||
   process.env.NEXT_PUBLIC_LOGS_API_URL ||
-  "http://localhost:8001"
+  "http://47.130.208.43:3000"
 )
   .replace(/^https:/, "wss:")
   .replace(/^http:/, "ws:")

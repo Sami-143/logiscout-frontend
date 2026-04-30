@@ -19,6 +19,7 @@ import {
 import type { Project } from "@/components/dashboard"
 import { useToast } from "@/hooks/use-toast"
 import { createLogger } from "@/lib/logger"
+import { clearStoredSelectedProject, setStoredSelectedProject } from "@/lib/selected-project"
 
 const log = createLogger("DashboardPage")
 
@@ -58,11 +59,13 @@ function DashboardContent() {
   const handleSelectProject = (project: Project) => {
     log.info({ projectId: project.id, name: project.name }, "Project selected")
     setSelectedProject(project)
+    setStoredSelectedProject({ id: project.id, name: project.name })
     setActiveView("overview") // Go to project overview first
   }
 
   const handleBackToProjects = () => {
     setSelectedProject(null)
+    clearStoredSelectedProject()
     setActiveView("overview")
   }
 
@@ -113,7 +116,7 @@ function DashboardContent() {
       case "overview":
         return <DashboardOverview />
       case "logs":
-        return <LiveLogs projectId={"1"} projectName={selectedProject?.name} />
+        return <LiveLogs projectId={selectedProject?.id} projectName={selectedProject?.name} />
       case "settings":
         return selectedProject ? (
           <div className="space-y-8">
