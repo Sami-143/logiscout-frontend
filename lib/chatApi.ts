@@ -1,6 +1,8 @@
 import api from "./api"
 import type { ApiResponse } from "./api"
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+
 export interface ChatSummary {
   id: string
   project_id: string
@@ -208,6 +210,36 @@ export const chatAPI = {
         }
         break
       }
+    }
+  },
+
+  /**
+   * Mark a chat session as closed on the server. Triggered when the user
+   * goes idle, leaves the chat view, switches conversations, or closes the tab.
+   */
+  async closeChat(projectId: string, chatId: string) {
+    const res = await api.post<ApiResponse<null>>(
+      `/chat/${projectId}/${chatId}/close`
+    )
+    return res.data
+  },
+
+  /**
+   * Best-effort close that survives page unloads. Uses navigator.sendBeacon
+   * (synchronous-ish, fire-and-forget, doesn't block the browser exit).
+   * Cookies are included automatically because beacons inherit credentials
+   * from the page origin.
+   */
+  closeChatBeacon(projectId: string, chatId: string): boolean {
+    if (typeof navigator === "undefined" || !navigator.sendBeacon) return false
+    const baseUrl = (api.defaults.baseURL || API_BASE_URL).replace(/\/$/, "")
+    const url = `${baseUrl}/chat/${projectId}/${chatId}/close`
+    try {
+      // Empty body is fine — endpoint identifies the session via the URL.
+      const blob = new Blob([JSON.stringify({})], { type: "application/json" })
+      return navigator.sendBeacon(url, blob)
+    } catch {
+      return false
     }
   },
 }

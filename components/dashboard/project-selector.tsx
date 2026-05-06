@@ -59,11 +59,15 @@ export interface Project {
   created_at: string
   updated_at: string
   webhook_base_url: string | null
+  /** Caller's role on this project. Defaults to "owner" for backwards compat. */
+  role?: "owner" | "edit" | "read"
 }
 
 interface ProjectSelectorProps {
   onSelectProject: (project: Project) => void
   onViewDocs: () => void
+  /** Bumping this number triggers a re-fetch of the project list. */
+  refreshKey?: number
 }
 
 type WizardStep = "details" | "language" | "creating" | "token"
@@ -110,7 +114,7 @@ scout.warn('Rate limit approaching', { usage: '89%' });`,
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function ProjectSelector({ onSelectProject, onViewDocs }: ProjectSelectorProps) {
+export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }: ProjectSelectorProps) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -148,6 +152,7 @@ export function ProjectSelector({ onSelectProject, onViewDocs }: ProjectSelector
             created_at: p.created_at,
             updated_at: p.updated_at,
             webhook_base_url: p.webhook_base_url ?? null,
+            role: p.role || "owner",
           })),
         )
         log.info({ count: res.data.length }, "Projects loaded")
@@ -162,7 +167,7 @@ export function ProjectSelector({ onSelectProject, onViewDocs }: ProjectSelector
 
   useEffect(() => {
     fetchProjects()
-  }, [fetchProjects])
+  }, [fetchProjects, refreshKey])
 
   const filtered = projects.filter(
     (p) =>
@@ -624,6 +629,22 @@ export function ProjectSelector({ onSelectProject, onViewDocs }: ProjectSelector
                   >
                     {langLabel(project.language)}
                   </Badge>
+                  {project.role && project.role !== "owner" && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] border-blue-500/30 text-blue-600 mr-1"
+                    >
+                      {project.role === "edit" ? "Editor" : "Viewer"}
+                    </Badge>
+                  )}
+                  {project.role === "owner" && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] border-amber-500/30 text-amber-600 mr-1"
+                    >
+                      Owner
+                    </Badge>
+                  )}
                   <Badge
                     variant={project.status === "active" ? "default" : "secondary"}
                     className={`text-[10px] ${
@@ -639,14 +660,16 @@ export function ProjectSelector({ onSelectProject, onViewDocs }: ProjectSelector
                     />
                     {project.status}
                   </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                    onClick={(e) => handleDelete(project.id, e)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {project.role === "owner" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                      onClick={(e) => handleDelete(project.id, e)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
 

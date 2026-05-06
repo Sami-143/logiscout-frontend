@@ -69,6 +69,10 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
   // Derived state
   const activeToken = tokens.find((t) => t.is_active)
   const hasActiveToken = !!activeToken
+  // When an active token exists, hide disabled ones — they're not actionable
+  // and just add noise. Show all tokens only when none are active so the user
+  // can still see/revoke history if needed.
+  const visibleTokens = hasActiveToken ? tokens.filter((t) => t.is_active) : tokens
 
   const fetchTokens = useCallback(async () => {
     try {
@@ -332,7 +336,7 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
           <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Loading tokens...</p>
         </div>
-      ) : tokens.length === 0 ? (
+      ) : visibleTokens.length === 0 ? (
         <div className="text-center py-12 space-y-4">
           <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-muted">
             <Key className="h-7 w-7 text-muted-foreground" />
@@ -350,7 +354,7 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
         </div>
       ) : (
         <div className="space-y-3">
-          {tokens.map((token) => (
+          {visibleTokens.map((token) => (
             <Card
               key={token.id}
               className={`p-4 border-border bg-card ${!token.is_active ? "opacity-60" : ""}`}

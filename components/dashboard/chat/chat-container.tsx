@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PanelLeftClose, PanelLeft, Zap, Sparkles } from "lucide-react"
@@ -24,6 +24,12 @@ function buildPendingChatTitle(content: string) {
   return content.slice(0, 50) + (content.length > 50 ? "..." : "")
 }
 
+// Chat IDs that don't exist on the server yet — skip /close for these.
+const isLocalChatId = (id: string) =>
+  id.startsWith("new-") || id.startsWith("temp-") || id.startsWith("local-")
+
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes of inactivity
+
 export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
   const [chats, setChats] = useState<ChatSummary[]>([])
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
@@ -33,6 +39,98 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const { toast } = useToast()
+
+  // Refs for the close-session lifecycle — refs (not state) so the unmount
+  // cleanup, idle timer, and unload handlers all see the latest values
+  // without re-binding listeners on every render.
+  const activeChatIdRef = useRef<string | null>(null)
+  const closedChatsRef = useRef<Set<string>>(new Set())
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /** Send a /close request for a chat, idempotently. */
+  const closeChatSession = useCallback(
+    (chatId: string | null, useBeacon = false) => {
+      if (!chatId || isLocalChatId(chatId)) return
+      if (closedChatsRef.current.has(chatId)) return
+      closedChatsRef.current.add(chatId)
+
+      if (useBeacon) {
+        chatAPI.closeChatBeacon(projectId, chatId)
+        log.info({ chatId, projectId }, "Chat closed via beacon")
+        return
+      }
+
+      chatAPI
+        .closeChat(projectId, chatId)
+        .then(() => log.info({ chatId, projectId }, "Chat session closed"))
+        .catch((err) => {
+          log.debug({ err, chatId }, "Close chat failed (best-effort)")
+          // Keep it in closedChats — retrying on every event would be noisy.
+        })
+    },
+    [projectId]
+  )
+
+  /** Reset the inactivity timer — call on any user interaction. */
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    if (!activeChatIdRef.current) return
+    idleTimerRef.current = setTimeout(() => {
+      const chatId = activeChatIdRef.current
+      if (chatId) {
+        log.info({ chatId }, "Chat idle timeout — closing session")
+        closeChatSession(chatId)
+      }
+    }, IDLE_TIMEOUT_MS)
+  }, [closeChatSession])
+
+  // Keep the activeChatId ref in sync, and close the *previous* chat when
+  // the user switches conversations.
+  useEffect(() => {
+    const previous = activeChatIdRef.current
+    activeChatIdRef.current = activeChatId
+
+    if (previous && previous !== activeChatId) {
+      closeChatSession(previous)
+    }
+
+    // Clear the closed marker when a new chat becomes active so that
+    // re-opening a chat later in the session works normally.
+    if (activeChatId) {
+      closedChatsRef.current.delete(activeChatId)
+      resetIdleTimer()
+    } else if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current)
+      idleTimerRef.current = null
+    }
+  }, [activeChatId, closeChatSession, resetIdleTimer])
+
+  // Page-level lifecycle: close the active chat when the tab is hidden,
+  // navigated away from, or the component unmounts.
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        closeChatSession(activeChatIdRef.current, true)
+      }
+    }
+    const handlePageHide = () => {
+      closeChatSession(activeChatIdRef.current, true)
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility)
+    window.addEventListener("pagehide", handlePageHide)
+    window.addEventListener("beforeunload", handlePageHide)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility)
+      window.removeEventListener("pagehide", handlePageHide)
+      window.removeEventListener("beforeunload", handlePageHide)
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+      // Component unmounting (user navigated to another dashboard view) —
+      // close synchronously via beacon to survive route changes.
+      closeChatSession(activeChatIdRef.current, true)
+    }
+  }, [closeChatSession])
 
   const fetchChats = useCallback(async () => {
     setChatsLoading(true)
@@ -116,6 +214,9 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
   const handleSend = useCallback(
     async (content: string) => {
       if (!activeChatId) return
+
+      // User just interacted — push the idle deadline back.
+      resetIdleTimer()
 
       const isNewChat = activeChatId.startsWith("new-")
       let resolvedChatId: string | undefined = isNewChat ? undefined : activeChatId
@@ -246,7 +347,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
         setSending(false)
       }
     },
-    [activeChatId, fetchChats, loadChat, projectId, toast]
+    [activeChatId, fetchChats, loadChat, projectId, resetIdleTimer, toast]
   )
 
   return (
@@ -289,7 +390,13 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
         </>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div
+        className="flex min-w-0 flex-1 flex-col"
+        onMouseMove={resetIdleTimer}
+        onKeyDown={resetIdleTimer}
+        onScroll={resetIdleTimer}
+        onClick={resetIdleTimer}
+      >
         <div className="flex items-center justify-between border-b border-border bg-card/80 px-4 py-2.5 backdrop-blur-sm sm:px-6">
           <div className="flex items-center gap-3">
             <Button

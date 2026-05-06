@@ -1,14 +1,20 @@
 "use client"
 
-import { Code2, Terminal, Github, MessageSquare, Webhook, Cloud } from "lucide-react"
+import { Code2, Terminal } from "lucide-react"
 
 const INTEGRATIONS = [
-  { name: "Node.js", icon: Code2, description: "Official SDK" },
-  { name: "Python", icon: Terminal, description: "Official SDK" },
-  { name: "GitHub", icon: Github, description: "Deployments" },
-  { name: "Slack", icon: MessageSquare, description: "Alerts" },
-  { name: "Webhooks", icon: Webhook, description: "Custom" },
-  { name: "AWS / GCP", icon: Cloud, description: "Cloud logs" },
+  {
+    name: "Node.js",
+    icon: Code2,
+    description: "Official SDK",
+    install: "npm install @logiscout/logger",
+  },
+  {
+    name: "Python",
+    icon: Terminal,
+    description: "Official SDK",
+    install: "pip install logiscout",
+  },
 ]
 
 export function Integrations() {
@@ -21,28 +27,33 @@ export function Integrations() {
             Integrations
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Fits Into Your Existing Stack
+            One-Line SDKs for Node.js &amp; Python
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            First-class SDKs for Python &amp; Node.js, plus webhooks and integrations for
-            the tools you already use.
+            Drop our official SDK into your service and start streaming logs in
+            under a minute. No agents, no sidecars, no config files.
           </p>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {INTEGRATIONS.map((item) => (
             <div
               key={item.name}
-              className="group flex flex-col items-center gap-3 p-6 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all text-center"
+              className="group flex flex-col gap-4 p-6 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all"
             >
-              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                <item.icon className="w-6 h-6" />
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <item.icon className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">{item.description}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-foreground text-sm">{item.name}</p>
-                <p className="text-xs text-muted-foreground">{item.description}</p>
-              </div>
+              <code className="block px-3 py-2 rounded-md bg-muted/60 text-xs font-mono text-foreground/80 border border-border">
+                {item.install}
+              </code>
             </div>
           ))}
         </div>

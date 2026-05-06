@@ -22,8 +22,8 @@ export function CTA() {
           Ready to Tame Your Logs?
         </h2>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-          Join 500+ engineering teams using LogiScout to ship faster, sleep better,
-          and resolve incidents before they become outages.
+          Spin up a project, drop in our Node.js or Python SDK, and watch your
+          logs stream in. Free while in beta — no card, no commitment.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

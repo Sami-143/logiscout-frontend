@@ -83,7 +83,7 @@ export function Hero() {
           <p
             className={`text-sm text-muted-foreground transition-all duration-700 delay-[400ms] ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           >
-            Trusted by <span className="font-semibold text-foreground">500+</span> engineering teams &bull; 5-minute setup &bull; SOC 2 compliant
+            Free to start &bull; 5-minute setup &bull; Node.js &amp; Python SDKs
           </p>
         </div>
 

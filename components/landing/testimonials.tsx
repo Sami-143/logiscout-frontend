@@ -7,27 +7,27 @@ import { Star } from "lucide-react"
 const TESTIMONIALS = [
   {
     name: "Ayesha Malik",
-    role: "SRE Lead, FinTrack",
+    role: "Backend Developer, Early Tester",
     avatar: "AM",
     quote:
-      "LogiScout cut our MTTR by 65%. The AI root cause analysis catches issues we would have spent hours debugging.",
+      "Setup with the Python SDK took me about two minutes. Watching my Flask app's logs stream into the dashboard in real time was the moment it clicked for me.",
     stars: 5,
   },
   {
     name: "James Chen",
-    role: "CTO, CloudSync",
+    role: "Indie Hacker",
     avatar: "JC",
     quote:
-      "We replaced Datadog + PagerDuty with LogiScout and saved $2k/month. The Python SDK was literally a one-line setup.",
+      "I used to SSH into my droplet and tail log files. Now I just open LogiScout. The Node.js logger was a drop-in replacement for my console.log calls.",
     stars: 5,
   },
   {
     name: "Priya Sharma",
-    role: "DevOps Engineer, Payroll.io",
+    role: "Final-Year CS Student",
     avatar: "PS",
     quote:
-      "The live log tail is incredible. Being able to filter, search, and get AI suggestions in the same view is a game-changer.",
-    stars: 5,
+      "Tried this for my university project — the live tail and search worked exactly as I expected. Honestly more polished than I thought a beta would be.",
+    stars: 4,
   },
 ]
 
@@ -41,10 +41,10 @@ export function Testimonials() {
             Testimonials
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Loved by Engineering Teams
+            What Early Users Are Saying
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            See why hundreds of teams choose LogiScout for their monitoring stack.
+            Honest feedback from developers who tried LogiScout during the beta.
           </p>
         </div>
 

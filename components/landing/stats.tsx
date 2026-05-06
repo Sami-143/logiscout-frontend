@@ -1,10 +1,10 @@
 "use client"
 
 const STATS = [
-  { value: "500+", label: "Engineering Teams" },
-  { value: "2B+", label: "Log Events / Day" },
-  { value: "65%", label: "Faster MTTR" },
-  { value: "99.99%", label: "Uptime SLA" },
+  { value: "2", label: "Official SDKs" },
+  { value: "<1s", label: "Ingest Latency" },
+  { value: "5 min", label: "Time to First Log" },
+  { value: "Free", label: "to Start" },
 ]
 
 export function Stats() {

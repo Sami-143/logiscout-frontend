@@ -42,9 +42,17 @@ api.interceptors.response.use(
     log.error({ status, url, message: error.message }, "API error")
 
     // Handle 401 Unauthorized — redirect to login
+    // Skip redirect for auth-related pages and endpoints (OTP verification,
+    // password reset, etc.) where the user is not expected to be logged in.
     if (status === 401) {
-      // Only redirect if not already on the home/login page
-      if (typeof window !== "undefined" && window.location.pathname !== "/") {
+      const path = typeof window !== "undefined" ? window.location.pathname : ""
+      const isAuthPage =
+        path === "/" ||
+        path.startsWith("/auth") ||
+        path.startsWith("/verify-otp")
+      const isAuthEndpoint = url?.startsWith("/api/auth/")
+
+      if (!isAuthPage && !isAuthEndpoint && typeof window !== "undefined") {
         log.warn("Session expired, redirecting to login")
         window.location.href = "/"
       }
@@ -212,6 +220,38 @@ export const authAPI = {
     const response = await api.post("/api/auth/session", { token })
     return response.data
   },
+
+  /**
+   * Request a password reset code
+   */
+  forgotPassword: async (email: string): Promise<ApiResponse> => {
+    const response = await api.post("/api/auth/forgot-password", { email })
+    return response.data
+  },
+
+  /**
+   * Reset password with the emailed code
+   */
+  resetPassword: async (data: {
+    resetToken: string
+    newPassword: string
+    confirmPassword: string
+  }): Promise<ApiResponse> => {
+    const response = await api.post("/api/auth/reset-password", data)
+    return response.data
+  },
+
+  /**
+   * Update password (authenticated — requires current password)
+   */
+  updatePassword: async (data: {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }): Promise<ApiResponse> => {
+    const response = await api.post("/api/auth/update-password", data)
+    return response.data
+  },
 }
 
 // ============================================
@@ -281,6 +321,30 @@ export interface ProjectData {
   updated_at: string
   token_count: number
   webhook_base_url: string | null
+  /** Caller's role on this project: "owner", "edit", or "read". */
+  role?: "owner" | "edit" | "read"
+}
+
+export interface CollaboratorData {
+  id: string
+  project_id: string
+  user_id: string
+  email: string
+  name: string
+  role: "read" | "edit"
+  status: "pending" | "active"
+  created_at: string
+  accepted_at: string | null
+}
+
+export interface InvitationData {
+  id: string
+  project_id: string
+  project_name: string
+  role: "read" | "edit"
+  inviter_name: string
+  inviter_email: string
+  created_at: string
 }
 
 export interface TokenData {
@@ -384,6 +448,87 @@ export const projectAPI = {
     projectId: string
   ): Promise<ApiResponse<{ webhookUrl: string }>> => {
     const response = await api.get(`/api/projects/${projectId}/github/webhook-url`)
+    return response.data
+  },
+
+  // Collaborator Management
+  /** List all collaborators for a project (owner-only) */
+  listCollaborators: async (
+    projectId: string
+  ): Promise<ApiResponse<CollaboratorData[]>> => {
+    const response = await api.get(`/api/projects/${projectId}/collaborators`)
+    return response.data
+  },
+
+  /** Invite a registered LogiScout user as a collaborator */
+  inviteCollaborator: async (
+    projectId: string,
+    data: { email: string; role: "read" | "edit" }
+  ): Promise<ApiResponse<CollaboratorData>> => {
+    const response = await api.post(
+      `/api/projects/${projectId}/collaborators`,
+      data
+    )
+    return response.data
+  },
+
+  /** Change a collaborator's role */
+  updateCollaboratorRole: async (
+    projectId: string,
+    collaboratorId: string,
+    data: { role: "read" | "edit" }
+  ): Promise<ApiResponse> => {
+    const response = await api.patch(
+      `/api/projects/${projectId}/collaborators/${collaboratorId}`,
+      data
+    )
+    return response.data
+  },
+
+  /** Remove a collaborator from a project */
+  removeCollaborator: async (
+    projectId: string,
+    collaboratorId: string
+  ): Promise<ApiResponse> => {
+    const response = await api.delete(
+      `/api/projects/${projectId}/collaborators/${collaboratorId}`
+    )
+    return response.data
+  },
+
+  /** Accept a pending collaborator invitation via email-link token */
+  acceptInvite: async (
+    inviteToken: string
+  ): Promise<ApiResponse> => {
+    const response = await api.post(`/api/projects/accept-invite`, {
+      invite_token: inviteToken,
+    })
+    return response.data
+  },
+
+  /** List all pending project invitations addressed to the current user */
+  listInvitations: async (): Promise<ApiResponse<InvitationData[]>> => {
+    const response = await api.get(`/api/projects/invitations`)
+    return response.data
+  },
+
+  /** Accept a pending project invitation by its id */
+  acceptInvitation: async (invitationId: string): Promise<ApiResponse> => {
+    const response = await api.post(
+      `/api/projects/invitations/${invitationId}/respond`,
+      null,
+      { params: { action: "accept" } }
+    )
+    return response.data
+  },
+
+  /** Decline a pending project invitation by its id */
+  declineInvitation: async (invitationId: string): Promise<ApiResponse> => {
+    const response = await api.post(
+      `/api/projects/invitations/${invitationId}/respond`,
+      null,
+      { params: { action: "decline" } }
+    )
     return response.data
   },
 }

@@ -223,7 +223,7 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="signin-password">Password</Label>
-                <button type="button" className="text-xs text-primary hover:underline">
+                <button type="button" className="text-xs text-primary hover:underline" onClick={() => router.push("/auth/forgot-password")}>
                   Forgot password?
                 </button>
               </div>

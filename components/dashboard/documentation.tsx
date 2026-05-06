@@ -154,8 +154,10 @@ const PYTHON_SIDEBAR_SECTIONS = [
       { id: "installation", label: "Installation", icon: Package },
       { id: "initialization", label: "Initialization", icon: Settings },
       { id: "logging", label: "Logging", icon: Terminal },
+      { id: "batching", label: "Batching", icon: Database },
       { id: "middleware", label: "Middleware", icon: Server },
       { id: "standalone", label: "Standalone Mode", icon: Box },
+      { id: "api-reference", label: "API Reference", icon: Code2 },
     ],
   },
   {
@@ -198,10 +200,22 @@ const NODEJS_SIDEBAR_SECTIONS = [
     label: "Node.js SDK",
     items: [
       { id: "nodejs-quickstart", label: "Quick Start", icon: Zap },
+      { id: "nodejs-installation", label: "Installation", icon: Package },
+      { id: "nodejs-initialization", label: "Initialization", icon: Settings },
       { id: "nodejs-logging", label: "Logging", icon: Terminal },
+      { id: "nodejs-batching", label: "Batching", icon: Database },
+      { id: "nodejs-middleware", label: "Middleware", icon: Server },
       { id: "nodejs-errors", label: "Error Handling", icon: AlertTriangle },
-      { id: "nodejs-express", label: "Express Integration", icon: Server },
+      { id: "nodejs-standalone", label: "Standalone Mode", icon: Box },
       { id: "nodejs-api-ref", label: "API Reference", icon: Code2 },
+    ],
+  },
+  {
+    label: "Frameworks",
+    items: [
+      { id: "nodejs-express", label: "Express", icon: Zap },
+      { id: "nodejs-fastify", label: "Fastify", icon: Globe },
+      { id: "nodejs-nestjs", label: "NestJS", icon: Database },
     ],
   },
   {
@@ -609,14 +623,15 @@ export function Documentation() {
                     language="python"
                     filename="main.py"
                     code={`from fastapi import FastAPI
-from logiscout_logger import init, get_logger, asgiConfiguration
+from logiscout_logger import init, get_logger, asgiConfiguration, PROD
 
 app = FastAPI()
 
-# Initialize LogiScout with your instance endpoint
+# Initialize LogiScout once at application startup
 init(
+    api_token="lsk_live_abc123...",
     service_name="my-fastapi-app",
-    endpoint="https://logiscout.example.com/logs"
+    env=PROD,            # DEV = console only, PROD = console + remote batching
 )
 
 # Add ASGI middleware for automatic correlation IDs
@@ -651,7 +666,8 @@ def process_payment(amount: float):
         # ... business logic ...
         logger.info("Payment successful", amount=amount)
     except Exception as e:
-        logger.error("Payment failed", error=str(e), amount=amount)`}
+        # send=False keeps confidential entries on the console only
+        logger.error("Payment failed", error=str(e), amount=amount, send=True)`}
                   />
                 </div>
               </div>
@@ -804,25 +820,18 @@ print(logiscout_logger.__version__)  # → 1.0.0`}
           <section id="initialization">
             <SectionHeading id="initialization-heading">Initialization</SectionHeading>
             <p className="text-muted-foreground leading-relaxed">
-              The <InlineCode>init()</InlineCode> function configures global logging settings and
-              the remote transport. Call it <strong>once</strong> during application startup,
-              before any logging calls.
+              The <InlineCode>init()</InlineCode> function configures the SDK and selects the
+              transport mode. Call it <strong>once</strong> during application startup, before any
+              logging calls.
             </p>
 
             <SubHeading id="init-signature">Function Signature</SubHeading>
             <CodeBlock
               language="python"
               code={`def init(
+    api_token: str,
     service_name: str,
-    endpoint: str,
-    *,
-    api_key: str | None = None,
-    environment: str = "production",
-    log_level: str = "INFO",
-    batch_size: int = 100,
-    flush_interval: float = 5.0,
-    max_retries: int = 3,
-    timeout: float = 10.0,
+    env: str,            # DEV or PROD (re-exported from logiscout_logger)
 ) -> None:`}
             />
 
@@ -834,26 +843,20 @@ print(logiscout_logger.__version__)  # → 1.0.0`}
                     <tr className="border-b border-border bg-muted/30">
                       <th className="text-left px-4 py-3 font-semibold text-foreground">Parameter</th>
                       <th className="text-left px-4 py-3 font-semibold text-foreground">Type</th>
-                      <th className="text-left px-4 py-3 font-semibold text-foreground">Default</th>
+                      <th className="text-left px-4 py-3 font-semibold text-foreground">Required</th>
                       <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {[
-                      ["service_name", "str", "required", "Unique identifier for your service (e.g., 'auth-service')."],
-                      ["endpoint", "str", "required", "LogiScout ingestion endpoint URL."],
-                      ["api_key", "str | None", "None", "API key for authenticated log shipping. Generated in Settings → API Keys."],
-                      ["environment", "str", '"production"', "Deployment environment label (production, staging, development)."],
-                      ["log_level", "str", '"INFO"', "Minimum log level to emit. One of DEBUG, INFO, WARNING, ERROR, CRITICAL."],
-                      ["batch_size", "int", "100", "Max number of log entries buffered before flush."],
-                      ["flush_interval", "float", "5.0", "Max seconds between automatic flushes."],
-                      ["max_retries", "int", "3", "Number of retry attempts for failed HTTP deliveries."],
-                      ["timeout", "float", "10.0", "HTTP request timeout in seconds."],
-                    ].map(([param, type, def, desc]) => (
+                      ["api_token", "str", "Yes", "API token issued by your LogiScout project. Used for authenticated log shipping in PROD mode."],
+                      ["service_name", "str", "Yes", "Unique identifier for your service. Attached to every log entry (e.g. 'payment-service')."],
+                      ["env", "str", "Yes", "Either DEV (console output only) or PROD (console + batched remote ingest)."],
+                    ].map(([param, type, req, desc]) => (
                       <tr key={param} className="hover:bg-muted/20 transition-colors">
                         <td className="px-4 py-3 font-mono text-xs text-primary">{param}</td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{type}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{def}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{req}</td>
                         <td className="px-4 py-3 text-muted-foreground">{desc}</td>
                       </tr>
                     ))}
@@ -862,36 +865,53 @@ print(logiscout_logger.__version__)  # → 1.0.0`}
               </div>
             </div>
 
+            <SubHeading id="init-modes">DEV vs PROD</SubHeading>
+            <div className="grid sm:grid-cols-2 gap-4 mt-3">
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500">
+                    <Code2 className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">DEV</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Console-only. Logs are pretty-printed locally with no network calls. Ideal for
+                  local development and tests.
+                </p>
+              </Card>
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-500/10 text-purple-500">
+                    <Server className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">PROD</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Console + batched remote ingest. Logs are flushed when 200 entries accumulate
+                  or 30 seconds elapse, whichever comes first.
+                </p>
+              </Card>
+            </div>
+
             <SubHeading id="init-example">Full Initialization Example</SubHeading>
             <CodeBlock
               language="python"
               filename="config/logging.py"
-              code={`from logiscout_logger import init
+              code={`import os
+from logiscout_logger import init, DEV, PROD
 
 def setup_logging():
     """Initialize LogiScout logger at application startup."""
     init(
-        service_name="payment-service",
-        endpoint="https://logiscout.example.com/logs",
-        api_key="lsk_live_abc123...",
-        environment="production",
-        log_level="INFO",
-        batch_size=50,
-        flush_interval=3.0,
+        api_token=os.getenv("LOGISCOUT_API_TOKEN", ""),
+        service_name=os.getenv("SERVICE_NAME", "payment-service"),
+        env=PROD if os.getenv("APP_ENV") == "production" else DEV,
     )`}
             />
 
             <Callout type="warning" title="Environment Variables">
-              Never hard-code API keys. Use environment variables instead:
-              <CodeBlock
-                language="python"
-                code={`import os
-init(
-    service_name=os.getenv("SERVICE_NAME", "my-app"),
-    endpoint=os.getenv("LOGISCOUT_ENDPOINT"),
-    api_key=os.getenv("LOGISCOUT_API_KEY"),
-)`}
-              />
+              Never hard-code API tokens. Read them from environment variables, a secrets manager,
+              or your platform's secret store.
             </Callout>
           </section>
 
@@ -928,25 +948,58 @@ init(
               language="python"
               code={`from logiscout_logger import get_logger
 
-logger = get_logger("order-service")
+logger = get_logger(__name__)
 
 # Simple message
 logger.info("Order created")
 
-# With structured context
+# With structured metadata (any keyword args become JSON fields)
 logger.info("Order created", order_id="ORD-12345", user_id=42, total=99.99)
 
 # Warning with context
 logger.warning("Inventory running low", sku="WIDGET-01", remaining=3)
 
-# Error with exception info
+# Error inside an except block — traceback is captured automatically
 try:
     process_order(order)
 except Exception as e:
     logger.error("Order processing failed", error=str(e), order_id=order.id)
 
-# Debug (only emitted if log_level is set to DEBUG)
-logger.debug("Cache miss", key="user:42:profile")`}
+# Debug entry
+logger.debug("Cache miss", key="user:42:profile")
+
+# Critical
+logger.critical("Database connection lost")`}
+            />
+
+            <SubHeading id="confidential-logs">Confidential Logs (send=False)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Pass <InlineCode>send=False</InlineCode> to keep an entry on the local console
+              without shipping it to the LogiScout ingest. Use this for entries that contain
+              secrets, tokens, or other data that should never leave the host.
+            </p>
+            <CodeBlock
+              language="python"
+              code={`# Visible in the console only — not shipped to LogiScout
+logger.debug("Decoded JWT", payload=jwt_payload, send=False)
+
+# Default behaviour — sent to LogiScout in PROD mode
+logger.info("Order placed", order_id=order.id)`}
+            />
+
+            <SubHeading id="bound-loggers">Bound Loggers</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Use <InlineCode>logger.bind(**context)</InlineCode> to create a child logger that
+              automatically attaches a fixed set of fields to every subsequent call.
+            </p>
+            <CodeBlock
+              language="python"
+              code={`request_logger = logger.bind(request_id=req.id, user_id=req.user.id)
+
+request_logger.info("Validating payload")
+request_logger.info("Querying database")
+request_logger.info("Returning response", status=200)
+# Every entry above carries request_id and user_id`}
             />
 
             <SubHeading id="log-output">Output Format</SubHeading>
@@ -961,27 +1014,68 @@ logger.debug("Cache miss", key="user:42:profile")`}
   "level": "info",
   "event": "Order created",
   "service": "order-service",
-  "environment": "production",
-  "correlation_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "environment": "PROD",
+  "correlationId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "order_id": "ORD-12345",
   "user_id": 42,
   "total": 99.99
 }`}
             />
+          </section>
 
-            <SubHeading id="exception-logging">Exception Logging</SubHeading>
-            <p className="text-sm text-muted-foreground mb-3">
-              When you pass <InlineCode>exc_info=True</InlineCode> or log inside an{" "}
-              <InlineCode>except</InlineCode> block, the full traceback is automatically
-              captured and formatted.
+          {/* ============================================================ */}
+          {/*  BATCHING                                                     */}
+          {/* ============================================================ */}
+
+          <section id="batching">
+            <SectionHeading id="batching-heading">Batching</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              In <InlineCode>PROD</InlineCode> mode, log entries are buffered in a thread-safe
+              queue and flushed to the LogiScout ingest in batches. This minimizes network
+              overhead and protects your application from transient ingest failures.
             </p>
+
+            <div className="grid sm:grid-cols-2 gap-4 mt-6">
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-yellow-500/10 text-yellow-500">
+                    <Database className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">Size threshold</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The buffer is flushed when it accumulates{" "}
+                  <strong className="text-foreground">200 log entries</strong>.
+                </p>
+              </Card>
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-500/10 text-green-500">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">Time threshold</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The buffer is flushed at most every{" "}
+                  <strong className="text-foreground">30 seconds</strong>, whichever comes first.
+                </p>
+              </Card>
+            </div>
+
+            <Callout type="info" title="Graceful shutdown">
+              An <InlineCode>atexit</InlineCode> handler flushes any buffered entries when the
+              process exits, so logs produced just before shutdown are not lost.
+            </Callout>
+
+            <SubHeading id="batching-flow">Pipeline</SubHeading>
             <CodeBlock
-              language="python"
-              code={`try:
-    result = 1 / 0
-except ZeroDivisionError:
-    logger.error("Division by zero", exc_info=True)
-    # Traceback is automatically included in the JSON output`}
+              language="text"
+              code={`┌─────────────┐    ┌──────────────────┐    ┌────────────────┐    ┌──────────────┐
+│ Application │ →  │ Structured event │ →  │ Buffer         │ →  │ HTTPS POST   │
+│ logger.*    │    │ build_log_event  │    │ 200 logs / 30s │    │ /ingest      │
+└─────────────┘    └──────────────────┘    └────────────────┘    └──────────────┘
+       ▲                                                                  │
+       └──── ASGI / WSGI middleware adds correlationId ───────────────────┘`}
             />
           </section>
 
@@ -1231,6 +1325,78 @@ def user_profile(request, user_id):
             />
           </section>
 
+          {/* ============================================================ */}
+          {/*  PYTHON API REFERENCE                                         */}
+          {/* ============================================================ */}
+
+          <section id="api-reference">
+            <SectionHeading id="api-reference-heading">API Reference (Python)</SectionHeading>
+
+            <SubHeading id="py-init-fn">init(api_token, service_name, env)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Initialize the SDK. Must be called <strong>once</strong> before any logger is used.
+              See <InlineCode>Initialization</InlineCode> above for the full parameter table.
+            </p>
+
+            <SubHeading id="py-get-logger-fn">get_logger(name)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Returns a <InlineCode>LogiScoutLogger</InlineCode> instance scoped to the given
+              name. Typically called as <InlineCode>get_logger(__name__)</InlineCode> at module
+              top-level.
+            </p>
+            <CodeBlock
+              language="python"
+              code={`from logiscout_logger import get_logger
+logger = get_logger(__name__)`}
+            />
+
+            <SubHeading id="py-logger-methods">LogiScoutLogger Methods</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              All level methods accept <InlineCode>send: bool = True</InlineCode> plus arbitrary
+              keyword metadata.
+            </p>
+            <CodeBlock
+              language="python"
+              code={`logger.debug(msg, send=True, **metadata)
+logger.info(msg, send=True, **metadata)
+logger.warning(msg, send=True, **metadata)
+logger.error(msg, send=True, **metadata)
+logger.critical(msg, send=True, **metadata)
+logger.bind(**context)  # → returns a bound LogiScoutLogger`}
+            />
+
+            <SubHeading id="py-middleware-fn">asgiConfiguration / wsgiConfiguration</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Request-correlation middleware. See <InlineCode>Middleware</InlineCode> above.
+            </p>
+            <CodeBlock
+              language="python"
+              code={`from logiscout_logger import asgiConfiguration, wsgiConfiguration
+
+# ASGI (FastAPI / Starlette / Django ASGI)
+app.add_middleware(asgiConfiguration)
+
+# WSGI (Flask / Django WSGI)
+app.wsgi_app = wsgiConfiguration(app.wsgi_app)`}
+            />
+
+            <SubHeading id="py-constants">Constants</SubHeading>
+            <CodeBlock
+              language="python"
+              code={`from logiscout_logger import DEV, PROD
+
+# DEV  — console-only mode, no remote transmission
+# PROD — console + batched remote ingest`}
+            />
+
+            <SubHeading id="py-requirements">Requirements</SubHeading>
+            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
+              <li>Python <strong className="text-foreground">3.9+</strong></li>
+              <li><InlineCode>structlog</InlineCode> ≥ 24.0.0</li>
+              <li><InlineCode>requests</InlineCode> ≥ 2.28.0</li>
+            </ul>
+          </section>
+
           </>}
 
           {sdkTab === "nodejs" && <>
@@ -1348,6 +1514,140 @@ logger.error('Failed to process request');`}
           </section>
 
           {/* ============================================================ */}
+          {/*  NODE.JS INSTALLATION                                         */}
+          {/* ============================================================ */}
+
+          <section id="nodejs-installation">
+            <SectionHeading id="nodejs-installation-heading">Installation</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              The <InlineCode>logiscout</InlineCode> package is hosted on npm and supports
+              Node.js 18+ with first-class TypeScript types.
+            </p>
+
+            <SubHeading id="nodejs-install-npm">Using npm</SubHeading>
+            <CodeBlock code="npm install logiscout" language="bash" />
+
+            <SubHeading id="nodejs-install-pnpm">Using pnpm</SubHeading>
+            <CodeBlock code="pnpm add logiscout" language="bash" />
+
+            <SubHeading id="nodejs-install-yarn">Using Yarn</SubHeading>
+            <CodeBlock code="yarn add logiscout" language="bash" />
+
+            <SubHeading id="nodejs-verify">Verify Installation</SubHeading>
+            <CodeBlock
+              language="typescript"
+              code={`import { version } from 'logiscout';
+console.log(version);  // → 1.0.0`}
+            />
+
+            <Callout type="info" title="Dependencies">
+              The package ships its own batching transport and correlation middleware — no peer
+              dependencies are required. TypeScript declarations are bundled.
+            </Callout>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE.JS INITIALIZATION                                       */}
+          {/* ============================================================ */}
+
+          <section id="nodejs-initialization">
+            <SectionHeading id="nodejs-initialization-heading">Initialization</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              Call <InlineCode>initLogiscout()</InlineCode> <strong>once</strong> at application
+              startup, before creating any loggers. It configures the SDK and selects the
+              transport mode.
+            </p>
+
+            <SubHeading id="nodejs-init-signature">Function Signature</SubHeading>
+            <CodeBlock
+              language="typescript"
+              code={`function initLogiscout(config: {
+  projectName: string;
+  environment: 'dev' | 'staging' | 'prod';
+  apiKey?: string;
+}): void;`}
+            />
+
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold text-foreground mb-3">Parameters</h4>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left px-4 py-3 font-semibold text-foreground">Parameter</th>
+                      <th className="text-left px-4 py-3 font-semibold text-foreground">Type</th>
+                      <th className="text-left px-4 py-3 font-semibold text-foreground">Required</th>
+                      <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {[
+                      ["projectName", "string", "Yes", "Unique identifier for your service. Attached to every log entry."],
+                      ["environment", "'dev' | 'staging' | 'prod'", "Yes", "Selects transport mode. 'dev' is console-only; 'prod' enables console + batched remote ingest."],
+                      ["apiKey", "string", "No", "API key for authenticated log shipping. Required in 'prod'."],
+                    ].map(([param, type, req, desc]) => (
+                      <tr key={param} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-3 font-mono text-xs text-primary">{param}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{type}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{req}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{desc}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <SubHeading id="nodejs-init-modes">dev vs prod</SubHeading>
+            <div className="grid sm:grid-cols-2 gap-4 mt-3">
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500">
+                    <Code2 className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">dev</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Console-only. Pretty-printed locally with no network calls. Ideal for local
+                  development and tests.
+                </p>
+              </Card>
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-500/10 text-purple-500">
+                    <Server className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">prod</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Console + batched remote ingest. Logs are flushed when 200 entries accumulate
+                  or 30 seconds elapse, whichever comes first.
+                </p>
+              </Card>
+            </div>
+
+            <SubHeading id="nodejs-init-example">Full Initialization Example</SubHeading>
+            <CodeBlock
+              language="typescript"
+              filename="src/logging.ts"
+              code={`import { initLogiscout } from 'logiscout';
+
+export function setupLogging() {
+  initLogiscout({
+    projectName: process.env.SERVICE_NAME ?? 'payment-service',
+    environment: (process.env.APP_ENV as 'dev' | 'staging' | 'prod') ?? 'dev',
+    apiKey: process.env.LOGISCOUT_API_KEY,
+  });
+}`}
+            />
+
+            <Callout type="warning" title="Environment Variables">
+              Never hard-code API keys. Read them from environment variables, a secrets manager,
+              or your platform's secret store.
+            </Callout>
+          </section>
+
+          {/* ============================================================ */}
           {/*  NODE.JS LOGGING                                              */}
           {/* ============================================================ */}
 
@@ -1409,6 +1709,169 @@ logger.debug('Cache state', { keys: 42 }, { send: false });`}
               controls whether a log entry is shipped to the LogiScout server. This is useful
               for selectively sending logs in production while keeping verbose debug output local.
             </Callout>
+
+            <SubHeading id="nodejs-confidential-logs">Confidential Logs (send: false)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Pass <InlineCode>{`{ send: false }`}</InlineCode> to keep an entry on the local
+              console without shipping it to the LogiScout ingest. Use this for entries that
+              contain secrets, tokens, or other data that should never leave the host.
+            </p>
+            <CodeBlock
+              language="typescript"
+              code={`// Visible in the console only — not shipped to LogiScout
+logger.debug('Decoded JWT', { payload: jwtPayload }, { send: false });
+
+// Default behaviour — sent to LogiScout in 'prod' mode
+logger.info('Order placed', { orderId: order.id });`}
+            />
+
+            <SubHeading id="nodejs-bound-loggers">Bound Loggers</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Use <InlineCode>logger.child(context)</InlineCode> to create a child logger that
+              automatically attaches a fixed set of fields to every subsequent call.
+            </p>
+            <CodeBlock
+              language="typescript"
+              code={`const requestLogger = logger.child({ requestId: req.id, userId: req.user.id });
+
+requestLogger.info('Validating payload');
+requestLogger.info('Querying database');
+requestLogger.info('Returning response', { status: 200 });
+// Every entry above carries requestId and userId`}
+            />
+
+            <SubHeading id="nodejs-log-output">Output Format</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Every log entry is emitted as a JSON object with a consistent schema:
+            </p>
+            <CodeBlock
+              language="json"
+              filename="stdout"
+              code={`{
+  "timestamp": "2026-02-10T14:32:01.482Z",
+  "level": "info",
+  "event": "Order created",
+  "service": "order-service",
+  "environment": "prod",
+  "correlationId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "orderId": "ORD-12345",
+  "userId": 42,
+  "total": 99.99
+}`}
+            />
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE.JS BATCHING                                             */}
+          {/* ============================================================ */}
+
+          <section id="nodejs-batching">
+            <SectionHeading id="nodejs-batching-heading">Batching</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              In <InlineCode>prod</InlineCode> mode, log entries are buffered in an in-memory
+              queue and flushed to the LogiScout ingest in batches. This minimizes network
+              overhead and protects your application from transient ingest failures.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-4 mt-6">
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-yellow-500/10 text-yellow-500">
+                    <Database className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">Size threshold</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The buffer is flushed when it accumulates{" "}
+                  <strong className="text-foreground">200 log entries</strong>.
+                </p>
+              </Card>
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-500/10 text-green-500">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">Time threshold</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The buffer is flushed at most every{" "}
+                  <strong className="text-foreground">30 seconds</strong>, whichever comes first.
+                </p>
+              </Card>
+            </div>
+
+            <Callout type="info" title="Graceful shutdown">
+              A <InlineCode>process.on(&apos;beforeExit&apos;)</InlineCode> handler flushes any
+              buffered entries when the process exits, so logs produced just before shutdown are
+              not lost.
+            </Callout>
+
+            <SubHeading id="nodejs-batching-flow">Pipeline</SubHeading>
+            <CodeBlock
+              language="text"
+              code={`┌─────────────┐    ┌──────────────────┐    ┌────────────────┐    ┌──────────────┐
+│ Application │ →  │ Structured event │ →  │ Buffer         │ →  │ HTTPS POST   │
+│ logger.*    │    │ buildLogEvent    │    │ 200 logs / 30s │    │ /ingest      │
+└─────────────┘    └──────────────────┘    └────────────────┘    └──────────────┘
+       ▲                                                                  │
+       └──── Express middleware adds correlationId ───────────────────────┘`}
+            />
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE.JS MIDDLEWARE                                           */}
+          {/* ============================================================ */}
+
+          <section id="nodejs-middleware">
+            <SectionHeading id="nodejs-middleware-heading">Middleware</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              The Node.js SDK ships a correlation middleware that generates a unique correlation
+              ID per request (or reuses <InlineCode>X-Correlation-ID</InlineCode> from the
+              incoming headers) and binds it to every log call within that request&apos;s scope.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-4 mt-6">
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-500/10 text-green-500">
+                    <Zap className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">createCorrelationMiddleware</h4>
+                    <p className="text-xs text-muted-foreground">For Express / Connect-style apps</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Compatible with Express, Connect, and any framework that accepts standard
+                  Connect middleware. Uses <InlineCode>AsyncLocalStorage</InlineCode> for
+                  zero-overhead correlation propagation across async/await chains.
+                </p>
+              </Card>
+              <Card className="p-5 border-border">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500">
+                    <Globe className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">runWithCorrelation</h4>
+                    <p className="text-xs text-muted-foreground">For non-HTTP entry points</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Helper for queue consumers, cron jobs, and other non-HTTP entry points. Wraps
+                  a callback in an async-local correlation scope.
+                </p>
+              </Card>
+            </div>
+
+            <Callout type="info" title="Middleware capabilities">
+              <ul className="list-disc list-inside space-y-1 mt-1">
+                <li>Generates or propagates <InlineCode>X-Correlation-ID</InlineCode> headers</li>
+                <li>Binds <InlineCode>correlationId</InlineCode>, <InlineCode>httpMethod</InlineCode>, <InlineCode>httpPath</InlineCode>, and <InlineCode>httpStatus</InlineCode> to every log entry</li>
+                <li>Logs request start and completion with timing information</li>
+                <li>Sets the correlation ID on the response header for downstream tracing</li>
+              </ul>
+            </Callout>
           </section>
 
           {/* ============================================================ */}
@@ -1444,6 +1907,43 @@ try {
               When an <InlineCode>Error</InlineCode> object is passed as the third argument, the
               logger automatically extracts the message, stack trace, and error name for structured
               output. This makes it easy to search and filter errors in the LogiScout dashboard.
+            </Callout>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE.JS STANDALONE MODE                                      */}
+          {/* ============================================================ */}
+
+          <section id="nodejs-standalone">
+            <SectionHeading id="nodejs-standalone-heading">Standalone Mode</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              You can use <InlineCode>logiscout</InlineCode> as a standard structured logging
+              library <strong>without</strong> connecting to the LogiScout platform. Initialize
+              with <InlineCode>environment: &apos;dev&apos;</InlineCode> and omit the API key —
+              all logs are formatted as JSON and written to <InlineCode>stdout</InlineCode>.
+            </p>
+
+            <CodeBlock
+              language="typescript"
+              filename="scripts/etl-job.ts"
+              code={`import { initLogiscout, createLogger } from 'logiscout';
+
+initLogiscout({ projectName: 'etl-job', environment: 'dev' });
+
+const logger = createLogger('etl-job');
+
+logger.info('ETL pipeline started', { source: 's3://data-lake/raw' });
+
+for (const batch of dataBatches) {
+  logger.debug('Processing batch', { batchId: batch.id, records: batch.length });
+}
+
+logger.info('ETL pipeline completed', { processed: total, durationMs: elapsed });`}
+            />
+
+            <Callout type="tip" title="Great for scripts and CLIs">
+              Standalone mode is ideal for cron jobs, data pipelines, CLI tools, and local
+              development where you want structured logging without any remote dependency.
             </Callout>
           </section>
 
@@ -1498,6 +1998,104 @@ app.listen(3000, () => {
                 <li>Sets the <InlineCode>X-Correlation-ID</InlineCode> response header for downstream tracing</li>
               </ul>
             </Callout>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  FASTIFY INTEGRATION                                          */}
+          {/* ============================================================ */}
+
+          <section id="nodejs-fastify">
+            <SectionHeading id="nodejs-fastify-heading">Fastify Integration</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              Fastify is a high-performance Node.js framework. Register the correlation hook to
+              propagate request IDs across all log entries.
+            </p>
+
+            <CodeBlock
+              language="typescript"
+              filename="server.ts"
+              code={`import Fastify from 'fastify';
+import { initLogiscout, createLogger, runWithCorrelation } from 'logiscout';
+import { randomUUID } from 'node:crypto';
+
+const fastify = Fastify();
+
+// 1. Initialize LogiScout
+initLogiscout({
+  projectName: 'my-fastify-api',
+  environment: 'prod',
+  apiKey: process.env.LOGISCOUT_API_KEY,
+});
+
+const logger = createLogger('API');
+
+// 2. Wrap every request in a correlation scope
+fastify.addHook('onRequest', (req, reply, done) => {
+  const correlationId = (req.headers['x-correlation-id'] as string) ?? randomUUID();
+  reply.header('x-correlation-id', correlationId);
+  runWithCorrelation({ correlationId }, () => done());
+});
+
+fastify.get('/users', async (req) => {
+  logger.info('Fetching users', { page: req.query });
+  return { users: [] };
+});
+
+fastify.listen({ port: 3000 }, () => {
+  logger.info('Server started', { port: 3000 });
+});`}
+            />
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NESTJS INTEGRATION                                           */}
+          {/* ============================================================ */}
+
+          <section id="nodejs-nestjs">
+            <SectionHeading id="nodejs-nestjs-heading">NestJS Integration</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              NestJS uses Express under the hood by default, so the standard correlation
+              middleware works seamlessly. Wire it up in your <InlineCode>main.ts</InlineCode>
+              and provide a logger via dependency injection.
+            </p>
+
+            <CodeBlock
+              language="typescript"
+              filename="src/main.ts"
+              code={`import { NestFactory } from '@nestjs/core';
+import { initLogiscout, createCorrelationMiddleware } from 'logiscout';
+import { AppModule } from './app.module';
+
+initLogiscout({
+  projectName: 'my-nest-app',
+  environment: 'prod',
+  apiKey: process.env.LOGISCOUT_API_KEY,
+});
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.use(createCorrelationMiddleware());
+  await app.listen(3000);
+}
+bootstrap();`}
+            />
+
+            <CodeBlock
+              language="typescript"
+              filename="src/users/users.service.ts"
+              code={`import { Injectable } from '@nestjs/common';
+import { createLogger } from 'logiscout';
+
+@Injectable()
+export class UsersService {
+  private readonly logger = createLogger('UsersService');
+
+  async findOne(id: string) {
+    this.logger.info('Fetching user', { id });
+    // ... business logic ...
+  }
+}`}
+            />
           </section>
 
           {/* ============================================================ */}
@@ -1556,18 +2154,50 @@ logger.debug(message, metadata?, options?)
 logger.critical(message, metadata?, options?)`}
             />
 
+            <SubHeading id="logger-child-fn">logger.child(context)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Returns a child logger that automatically attaches the given context to every
+              subsequent call.
+            </p>
+            <CodeBlock
+              language="typescript"
+              code={`const requestLogger = logger.child({ requestId, userId });
+requestLogger.info('Validating payload');`}
+            />
+
             <SubHeading id="create-correlation-mw-fn">createCorrelationMiddleware()</SubHeading>
             <p className="text-sm text-muted-foreground mb-3">
-              Returns an Express middleware function that injects correlation IDs into every
-              request for end-to-end tracing.
+              Returns an Express/Connect middleware function that injects correlation IDs into
+              every request for end-to-end tracing.
             </p>
             <CodeBlock
               language="typescript"
               code={`import { createCorrelationMiddleware } from 'logiscout';
 
-// Use as Express middleware
 app.use(createCorrelationMiddleware());`}
             />
+
+            <SubHeading id="run-with-correlation-fn">runWithCorrelation(context, fn)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Wraps a callback in an async-local correlation scope. Use for queue consumers,
+              cron jobs, and other non-HTTP entry points.
+            </p>
+            <CodeBlock
+              language="typescript"
+              code={`import { runWithCorrelation } from 'logiscout';
+import { randomUUID } from 'node:crypto';
+
+await runWithCorrelation({ correlationId: randomUUID() }, async () => {
+  await processQueueMessage(msg);
+});`}
+            />
+
+            <SubHeading id="nodejs-requirements">Requirements</SubHeading>
+            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
+              <li>Node.js <strong className="text-foreground">18+</strong></li>
+              <li>TypeScript declarations bundled (works with plain JavaScript too)</li>
+              <li>Zero peer dependencies</li>
+            </ul>
           </section>
 
           </>}

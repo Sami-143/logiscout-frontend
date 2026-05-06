@@ -21,7 +21,6 @@ import {
 import {
   AlertTriangle,
   Settings,
-  Bell,
   Search,
   ChevronDown,
   Zap,
@@ -29,7 +28,6 @@ import {
   X,
   Home,
   BarChart3,
-  Workflow,
   FileText,
   HelpCircle,
   Terminal,
@@ -43,6 +41,7 @@ import {
 } from "lucide-react"
 import { useAppSelector, useAppDispatch } from "@/lib/store/hooks"
 import { logoutAsync } from "@/lib/store/authSlice"
+import { NotificationsBell } from "./notifications-bell"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -74,7 +73,7 @@ function ThemeToggle() {
   )
 }
 
-function UserMenu() {
+function UserMenu({ onNavigate }: { onNavigate?: (view: string) => void }) {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const { user } = useAppSelector((state) => state.auth)
@@ -117,11 +116,11 @@ function UserMenu() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onNavigate?.("profile")}>
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onNavigate?.("user-settings")}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
@@ -141,29 +140,32 @@ interface DashboardLayoutProps {
   onNavigate?: (view: string) => void
   selectedProject?: { id: string; name: string } | null
   onBackToProjects?: () => void
+  /** Called after a project invitation is accepted so the parent can refresh project data. */
+  onInvitationAccepted?: () => void
 }
 
 
-// Global nav — always visible regardless of project selection
+// Global nav — shown only when no project is selected.
+// Keep this minimal: project-scoped tools (Analytics, Integrations,
+// Settings, etc.) only make sense within a project context.
 const GLOBAL_NAV_ITEMS = [
-  { id: "overview", label: "Overview", icon: Home },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "integrations", label: "Integrations", icon: Workflow },
+  { id: "overview", label: "Projects", icon: FolderOpen },
   { id: "docs", label: "Documentation", icon: FileText },
 ]
 
-// Project-scoped nav — only visible when a project is selected
+// Project-scoped nav — shown after a project is selected.
+// API tokens and GitHub integration live inside "Project Settings".
 const PROJECT_NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "logs", label: "Live Logs", icon: Terminal },
   { id: "chat", label: "AI Chat", icon: MessageSquare },
   { id: "incidents", label: "Incidents", icon: AlertTriangle },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "settings", label: "Project Settings", icon: Settings },
   { id: "docs", label: "Documentation", icon: FileText },
 ]
 
-export function DashboardLayout({ children, activeView = "overview", onNavigate, selectedProject, onBackToProjects }: DashboardLayoutProps) {
+export function DashboardLayout({ children, activeView = "overview", onNavigate, selectedProject, onBackToProjects, onInvitationAccepted }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleNavClick = (itemId: string) => {
@@ -213,15 +215,12 @@ export function DashboardLayout({ children, activeView = "overview", onNavigate,
           {/* Right actions */}
           <div className="flex items-center gap-2 ml-auto">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-            </Button>
+            <NotificationsBell onInvitationAccepted={onInvitationAccepted} />
             <Button variant="ghost" size="icon" onClick={() => onNavigate?.("docs")}>
               <HelpCircle className="h-5 w-5" />
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <UserMenu />
+            <UserMenu onNavigate={onNavigate} />
           </div>
         </div>
       </header>
@@ -233,51 +232,82 @@ export function DashboardLayout({ children, activeView = "overview", onNavigate,
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <nav className="flex flex-col h-full p-4 gap-1">
-            {selectedProject && onBackToProjects && (
+          <nav className="flex flex-col h-full p-4 gap-1 overflow-y-auto">
+            {selectedProject && onBackToProjects ? (
               <>
                 <button
                   onClick={onBackToProjects}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors mb-1"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors mb-2"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-3.5 w-3.5" />
                   All Projects
                 </button>
-                <div className="flex items-center gap-2 px-3 py-2 mb-2">
-                  <FolderOpen className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground truncate">{selectedProject.name}</span>
+
+                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/15 mb-3">
+                  <div className="flex items-center justify-center h-7 w-7 rounded-md bg-primary/10 flex-shrink-0">
+                    <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
+                      Current Project
+                    </p>
+                    <p className="text-sm font-semibold text-foreground truncate mt-0.5">
+                      {selectedProject.name}
+                    </p>
+                  </div>
                 </div>
-                <Separator className="mb-2" />
+
+                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Project
+                </p>
+                {PROJECT_NAV_ITEMS.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.id)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      activeView === item.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {React.createElement(item.icon, { className: "h-4 w-4 flex-shrink-0" })}
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                ))}
+              </>
+            ) : (
+              <>
+                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Workspace
+                </p>
+                {GLOBAL_NAV_ITEMS.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.id)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      activeView === item.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {React.createElement(item.icon, { className: "h-4 w-4 flex-shrink-0" })}
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                ))}
+
+                <div className="mt-4 mx-1 rounded-lg border border-dashed border-border bg-muted/30 p-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary/10">
+                      <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <p className="text-xs font-semibold text-foreground">Select a project</p>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Open a project to access live logs, AI chat, analytics, integrations, and settings.
+                  </p>
+                </div>
               </>
             )}
-            {(selectedProject ? PROJECT_NAV_ITEMS : GLOBAL_NAV_ITEMS).map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  activeView === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {React.createElement(item.icon, { className: "h-4 w-4" })}
-                {item.label}
-              </button>
-            ))}
-
-            <Separator className="my-4" />
-
-            <button
-              onClick={() => handleNavClick("docs")}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeView === "settings-project"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <Settings className="h-4 w-4" />
-              Project Settings
-            </button>
           </nav>
         </aside>
 
