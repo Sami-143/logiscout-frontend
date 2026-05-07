@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
   Tooltip,
@@ -20,7 +19,6 @@ import {
   ChevronRight,
   Search,
   Zap,
-  ExternalLink,
   Package,
   Server,
   Shield,
@@ -317,50 +315,6 @@ export function Documentation() {
                   and <strong className="text-foreground">logiscout</strong> (Node.js) SDKs — quick start,
                   integrations, and API references.
                 </p>
-              </div>
-              <div className="flex flex-col items-start lg:items-end gap-3">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 h-9"
-                    onClick={() => scrollTo("api-reference")}
-                  >
-                    <Code2 className="h-4 w-4" />
-                    Python API Reference
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 h-9"
-                    onClick={() => scrollTo("logging-workflow")}
-                  >
-                    <Cpu className="h-4 w-4" />
-                    Python: How It Works
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 h-9"
-                  >
-                    <a href="https://github.com/Kazim68/logiscout-logger" target="_blank" rel="noreferrer">
-                      <ExternalLink className="h-4 w-4" />
-                      Python GitHub
-                    </a>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 h-9"
-                  >
-                    <a href="https://github.com/saadakmal460/Logiscout" target="_blank" rel="noreferrer">
-                      <ExternalLink className="h-4 w-4" />
-                      Node.js GitHub
-                    </a>
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
