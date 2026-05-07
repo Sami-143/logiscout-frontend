@@ -4,7 +4,7 @@ import axios from "axios";
 const baseURL =
   process.env.NEXT_PUBLIC_LOGS_API_URL ||
   process.env.NEXT_PUBLIC_LIVE_LOGS_URL ||
-  "http://47.130.208.43:3000";
+  "https://lgstreamingserver.duckdns.org";
 const headers = {
   accept: "application/json",
   "Content-Type": "application/json",
