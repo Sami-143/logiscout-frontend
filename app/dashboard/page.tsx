@@ -9,7 +9,8 @@ import {
   DashboardLayout,
   DashboardOverview,
   LiveLogs,
-  AnalyticsDashboard,
+  // AnalyticsDashboard — analytics view temporarily disabled, see renderContent below.
+  // AnalyticsDashboard,
   Documentation,
   ProjectSelector,
   TokenManagement,
@@ -226,8 +227,13 @@ function DashboardContent() {
         return selectedProject ? (
           <ChatContainer projectId={selectedProject.id} projectName={selectedProject.name} />
         ) : null
-      case "analytics":
-        return <AnalyticsDashboard />
+      // Analytics & Incidents — hidden for now, feature work in progress.
+      // Keeping the cases commented so the components stay wired in once
+      // we re-enable them in the sidebar nav.
+      // case "analytics":
+      //   return <AnalyticsDashboard />
+      // case "incidents":
+      //   return <IncidentsView />
       case "docs":
         return <Documentation />
       case "user-settings":

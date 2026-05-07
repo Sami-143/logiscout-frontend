@@ -19,7 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-  AlertTriangle,
+  // AlertTriangle — used for the disabled "Incidents" nav item.
+  // AlertTriangle,
   Settings,
   Search,
   ChevronDown,
@@ -27,7 +28,8 @@ import {
   Menu,
   X,
   Home,
-  BarChart3,
+  // BarChart3 — used for the disabled "Analytics" nav item.
+  // BarChart3,
   FileText,
   HelpCircle,
   Terminal,
@@ -159,8 +161,9 @@ const PROJECT_NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "logs", label: "Live Logs", icon: Terminal },
   { id: "chat", label: "AI Chat", icon: MessageSquare },
-  { id: "incidents", label: "Incidents", icon: AlertTriangle },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  // Hidden for now — feature work in progress.
+  // { id: "incidents", label: "Incidents", icon: AlertTriangle },
+  // { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Project Settings", icon: Settings },
   { id: "docs", label: "Documentation", icon: FileText },
 ]

@@ -173,19 +173,22 @@ const PYTHON_SIDEBAR_SECTIONS = [
     items: [
       { id: "dashboard", label: "Dashboard", icon: BarChart3 },
       { id: "incidents", label: "Incidents", icon: AlertTriangle },
-      { id: "alerting", label: "Alerting & Notifications", icon: Bell },
-      { id: "integrations", label: "Integrations", icon: Webhook },
+      // Hidden — content from Alerting through Incidents API is temporarily
+      // disabled in the docs body. Re-enable nav entries once the matching
+      // sections are unwrapped from the `false &&` block.
+      // { id: "alerting", label: "Alerting & Notifications", icon: Bell },
+      // { id: "integrations", label: "Integrations", icon: Webhook },
     ],
   },
-  {
-    label: "REST API",
-    items: [
-      { id: "api-overview", label: "API Overview", icon: Code2 },
-      { id: "api-auth", label: "Authentication", icon: Shield },
-      { id: "api-logs", label: "Logs API", icon: FileText },
-      { id: "api-incidents", label: "Incidents API", icon: AlertTriangle },
-    ],
-  },
+  // {
+  //   label: "REST API",
+  //   items: [
+  //     { id: "api-overview", label: "API Overview", icon: Code2 },
+  //     { id: "api-auth", label: "Authentication", icon: Shield },
+  //     { id: "api-logs", label: "Logs API", icon: FileText },
+  //     { id: "api-incidents", label: "Incidents API", icon: AlertTriangle },
+  //   ],
+  // },
 ]
 
 const NODEJS_SIDEBAR_SECTIONS = [
@@ -223,19 +226,22 @@ const NODEJS_SIDEBAR_SECTIONS = [
     items: [
       { id: "dashboard", label: "Dashboard", icon: BarChart3 },
       { id: "incidents", label: "Incidents", icon: AlertTriangle },
-      { id: "alerting", label: "Alerting & Notifications", icon: Bell },
-      { id: "integrations", label: "Integrations", icon: Webhook },
+      // Hidden — content from Alerting through Incidents API is temporarily
+      // disabled in the docs body. Re-enable nav entries once the matching
+      // sections are unwrapped from the `false &&` block.
+      // { id: "alerting", label: "Alerting & Notifications", icon: Bell },
+      // { id: "integrations", label: "Integrations", icon: Webhook },
     ],
   },
-  {
-    label: "REST API",
-    items: [
-      { id: "api-overview", label: "API Overview", icon: Code2 },
-      { id: "api-auth", label: "Authentication", icon: Shield },
-      { id: "api-logs", label: "Logs API", icon: FileText },
-      { id: "api-incidents", label: "Incidents API", icon: AlertTriangle },
-    ],
-  },
+  // {
+  //   label: "REST API",
+  //   items: [
+  //     { id: "api-overview", label: "API Overview", icon: Code2 },
+  //     { id: "api-auth", label: "Authentication", icon: Shield },
+  //     { id: "api-logs", label: "Logs API", icon: FileText },
+  //     { id: "api-incidents", label: "Incidents API", icon: AlertTriangle },
+  //   ],
+  // },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -2290,9 +2296,12 @@ await runWithCorrelation({ correlationId: randomUUID() }, async () => {
           </section>
 
           {/* ============================================================ */}
-          {/*  ALERTING & NOTIFICATIONS                                     */}
+          {/*  HIDDEN: Alerting → Resolve an Incident                       */}
+          {/*  Wrapped in `false && (...)` so it's preserved but not        */}
+          {/*  rendered. Re-enable by removing the wrapper.                 */}
           {/* ============================================================ */}
 
+          {false && (<>
           <section id="alerting">
             <SectionHeading id="alerting-heading">Alerting &amp; Notifications</SectionHeading>
             <p className="text-muted-foreground leading-relaxed">
@@ -2542,6 +2551,8 @@ Content-Type: application/json
 }`}
             />
           </section>
+          </>)}
+          {/* End hidden block */}
 
           {/* ============================================================ */}
           {/*  Footer                                                       */}
