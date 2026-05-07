@@ -16,7 +16,6 @@ import {
   Clock,
   Zap,
   Github,
-  ExternalLink,
   MoreVertical,
   AlertCircle,
   Server,
@@ -98,18 +97,6 @@ const ACTIVITY_FEED = [
     time: "3 hours ago",
     icon: CheckCircle2,
     iconColor: "text-primary",
-  },
-]
-
-const INTEGRATIONS = [
-  {
-    id: "github",
-    name: "GitHub",
-    status: "connected",
-    repo: "company/api-service",
-    lastActivity: "1 hour ago",
-    icon: Github,
-    color: "text-foreground",
   },
 ]
 
@@ -325,70 +312,6 @@ export function DashboardOverview() {
         </div>
       </div>
 
-      {/* Integrations Status */}
-      <Card className="border-border bg-card">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Integration Status</h2>
-              <p className="text-sm text-muted-foreground mt-1">Connected collaboration tools and services</p>
-            </div>
-            <Button variant="outline" size="sm">
-              Manage
-            </Button>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            {INTEGRATIONS.map((integration) => (
-              <Card key={integration.id} className="p-5 border-border bg-muted/30">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-lg bg-background`}>
-                    <integration.icon className={`h-5 w-5 ${integration.color}`} />
-                  </div>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-xs">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Connected
-                  </Badge>
-                </div>
-
-                <h3 className="font-semibold text-foreground mb-2">{integration.name}</h3>
-
-                <div className="space-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center justify-between">
-                    <span>
-                      {integration.id === "github" && `Repo: ${integration.repo}`}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Last activity:</span>
-                    <span className="text-foreground font-medium">{integration.lastActivity}</span>
-                  </div>
-                </div>
-
-                <Separator className="my-4" />
-
-                <Button variant="ghost" size="sm" className="w-full gap-2 h-8">
-                  View Details
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-              </Card>
-            ))}
-          </div>
-
-          <div className="mt-6 p-4 bg-muted/50 border border-border rounded-lg">
-            <div className="flex gap-3">
-              <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">Collaboration Tools Active</p>
-                <p className="text-xs text-muted-foreground">
-                  LogiScout integrates with your development tools to provide real-time alerts, root cause analysis,
-                  and incident updates directly where your team works.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
     </div>
   )
 }
