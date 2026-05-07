@@ -3,6 +3,13 @@
 import { createElement, useEffect, useRef, useState, type ReactNode } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { toast } from "@/hooks/use-toast"
 import { Zap, User, Copy, Check, Sparkles } from "lucide-react"
 import type { ChatMessage } from "@/lib/chatApi"
 
@@ -37,22 +44,31 @@ function TypingIndicator() {
   )
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = "Content" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
     navigator.clipboard.writeText(text)
     setCopied(true)
+    toast({ title: "Copied!", description: `${label} copied to clipboard.` })
     setTimeout(() => setCopied(false), 2000)
   }
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={handleCopy}
-      className="h-6 w-6 opacity-0 group-hover/code:opacity-100 transition-opacity"
-    >
-      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
-    </Button>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCopy}
+            className="h-6 w-6 opacity-0 group-hover/code:opacity-100 transition-opacity"
+            aria-label="Copy to clipboard"
+          >
+            {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{copied ? "Copied!" : "Copy"}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }
 
@@ -63,7 +79,7 @@ function renderCodeBlock(code: string, language: string, key: string) {
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
           {language || "code"}
         </span>
-        <CopyButton text={code} />
+        <CopyButton text={code} label="Code" />
       </div>
       <pre className="overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed text-zinc-100">
         <code className="whitespace-pre">{code}</code>
@@ -705,7 +721,28 @@ function MessageBubble({ message, currentUserId }: { message: ChatMessage; curre
             })}
           </span>
         </div>
-        <div className="rounded-2xl rounded-tl-sm bg-muted/40 border border-border/50 px-5 py-4 shadow-sm">
+        <div className="rounded-2xl rounded-tl-sm bg-muted/40 border border-border/50 px-5 py-4 shadow-sm relative group/assistant">
+          <div className="absolute right-3 top-3">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(message.content)
+                      toast({ title: "Copied!", description: "Response copied to clipboard." })
+                    }}
+                    className="h-7 w-7 opacity-0 group-hover/assistant:opacity-100 transition-opacity"
+                    aria-label="Copy response"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Copy</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <div className="space-y-2 text-sm leading-relaxed text-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
             {renderMarkdown(message.content)}
           </div>
