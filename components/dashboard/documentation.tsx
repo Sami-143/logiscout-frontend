@@ -114,7 +114,7 @@ function SubHeading({ id, children }: { id: string; children: React.ReactNode })
 
 const PYTHON_SIDEBAR_SECTIONS = [
   {
-    label: "Python Overview",
+    label: "Library SDK Overview",
     items: [
       { id: "introduction", label: "Introduction", icon: BookOpen },
       { id: "highlights", label: "Highlights", icon: CheckCircle2 },
