@@ -17,7 +17,15 @@ export interface ChatMessage {
   role: "user" | "assistant"
   content: string
   created_at: string
-  metadata?: Record<string, unknown>
+  metadata?: {
+    sender?: {
+      id?: string
+      name?: string
+      email?: string
+      type?: "user" | "assistant" | "system"
+    }
+    [key: string]: unknown
+  }
 }
 
 interface BackendChatMessage {

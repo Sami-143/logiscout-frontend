@@ -9,6 +9,7 @@ import { createLogger } from "@/lib/logger"
 import { chatAPI } from "@/lib/chatApi"
 import { extractChatMessages, normalizeChatMessages } from "@/lib/chatApi"
 import type { ChatSummary, ChatMessage, ChatStreamEvent } from "@/lib/chatApi"
+import { useAppSelector } from "@/lib/store/hooks"
 import { ChatSidebar } from "./chat-sidebar"
 import { ChatMessages } from "./chat-messages"
 import { ChatInput } from "./chat-input"
@@ -38,6 +39,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
   const [chatsLoading, setChatsLoading] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const { user } = useAppSelector((state) => state.auth)
 
   // Refs for the close-session lifecycle — refs (not state) so the unmount
   // cleanup, idle timer, and unload handlers all see the latest values
@@ -221,6 +223,14 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
         role: "user",
         content,
         created_at: new Date().toISOString(),
+        metadata: {
+          sender: {
+            id: user?.id,
+            name: user?.name,
+            email: user?.email,
+            type: "user",
+          },
+        },
       }
 
       if (isNewChat) {
@@ -342,6 +352,18 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
     [activeChatId, fetchChats, loadChat, projectId, resetIdleTimer]
   )
 
+  useEffect(() => {
+    if (!activeChatId || isLocalChatId(activeChatId)) return
+
+    const interval = setInterval(() => {
+      if (sending || messagesLoading) return
+      void fetchChats()
+      void loadChat(activeChatId)
+    }, 15000)
+
+    return () => clearInterval(interval)
+  }, [activeChatId, fetchChats, loadChat, messagesLoading, sending])
+
   const handleSuggestion = useCallback(
     (suggestion: string) => {
       if (sending || messagesLoading) return
@@ -456,6 +478,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
           projectName={projectName}
           onSuggestionClick={handleSuggestion}
           suggestionsDisabled={messagesLoading || sending}
+          currentUserId={user?.id}
         />
 
         {activeChatId ? (

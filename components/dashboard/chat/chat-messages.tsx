@@ -12,6 +12,7 @@ interface ChatMessagesProps {
   projectName?: string
   onSuggestionClick?: (suggestion: string) => void
   suggestionsDisabled?: boolean
+  currentUserId?: string
 }
 
 function TypingIndicator() {
@@ -610,22 +611,78 @@ function renderMarkdown(content: string) {
   return blocks
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === "user"
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+}
 
-  if (isUser) {
+function MessageBubble({ message, currentUserId }: { message: ChatMessage; currentUserId?: string }) {
+  const isUser = message.role === "user"
+  const sender = message.metadata?.sender
+  const senderId = sender?.id
+  const senderName = sender?.name || sender?.email || (isUser ? "User" : "LogiScout")
+  const isCurrentUser = isUser && (!senderId || senderId === currentUserId)
+  const isCollaborator = isUser && !isCurrentUser
+
+  if (isUser && isCurrentUser) {
     return (
       <div className="flex items-start justify-end gap-3 max-w-3xl mx-auto px-4 sm:px-6">
-        <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-primary px-4 py-3 shadow-sm">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap text-primary-foreground">
-            {message.content}
-          </p>
+        <div className="max-w-[80%]">
+          <div className="flex items-center justify-end gap-2 text-[10px] text-muted-foreground mb-1">
+            <span>You</span>
+            <span>
+              {new Date(message.created_at).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </span>
+          </div>
+          <div className="rounded-2xl rounded-tr-sm bg-primary px-4 py-3 shadow-sm">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap text-primary-foreground">
+              {message.content}
+            </p>
+          </div>
         </div>
-        <Avatar className="h-8 w-8 shrink-0 mt-1 ring-2 ring-border">
+        <Avatar className="h-8 w-8 shrink-0 mt-6 ring-2 ring-border">
           <AvatarFallback className="bg-secondary text-secondary-foreground">
             <User className="h-3.5 w-3.5" />
           </AvatarFallback>
         </Avatar>
+      </div>
+    )
+  }
+
+  if (isCollaborator) {
+    return (
+      <div className="flex items-start gap-3 max-w-3xl mx-auto px-4 sm:px-6">
+        <Avatar className="h-8 w-8 shrink-0 mt-6 ring-2 ring-border">
+          <AvatarFallback className="bg-muted text-foreground text-xs font-semibold">
+            {getInitials(senderName)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="max-w-[80%]">
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-1">
+            <span className="font-medium text-foreground/80">{senderName}</span>
+            <span>
+              {new Date(message.created_at).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </span>
+          </div>
+          <div className="rounded-2xl rounded-tl-sm bg-muted/60 border border-border/60 px-4 py-3 shadow-sm">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+              {message.content}
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
@@ -639,7 +696,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       </Avatar>
       <div className="flex-1 max-w-[92%] space-y-1 mt-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-[11px] font-semibold text-foreground">LogiScout</span>
+          <span className="text-[11px] font-semibold text-foreground">{senderName}</span>
           <span className="text-[10px] text-muted-foreground">
             {new Date(message.created_at).toLocaleTimeString("en-US", {
               hour: "2-digit",
@@ -658,7 +715,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   )
 }
 
-export function ChatMessages({ messages, isLoading, projectName, onSuggestionClick, suggestionsDisabled }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading, projectName, onSuggestionClick, suggestionsDisabled, currentUserId }: ChatMessagesProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -730,7 +787,7 @@ export function ChatMessages({ messages, isLoading, projectName, onSuggestionCli
     <div className="flex-1 overflow-y-auto">
       <div className="space-y-5 py-6">
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageBubble key={msg.id} message={msg} currentUserId={currentUserId} />
         ))}
         {isLoading && <TypingIndicator />}
         <div ref={bottomRef} />
