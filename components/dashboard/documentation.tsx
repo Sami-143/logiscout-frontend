@@ -65,19 +65,36 @@ function CopyButton({ text, label = "Snippet" }: { text: string; label?: string 
 
 function CodeBlock({ code, language = "python", filename }: { code: string; language?: string; filename?: string }) {
   return (
-    <div className="group relative rounded-xl border border-border bg-[#0d1117] text-sm font-mono overflow-hidden my-4">
-      {filename && (
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-[#161b22]">
-          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{filename}</span>
-          <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 h-5 bg-primary/10 text-primary border-0">
+    <div className="group relative rounded-xl border border-slate-800/80 bg-[#0b1120] text-sm font-mono overflow-hidden my-5 shadow-lg shadow-slate-950/30 ring-1 ring-white/5">
+      {filename ? (
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-800/80 bg-gradient-to-r from-slate-900/90 to-slate-900/60">
+          <div className="flex items-center gap-1.5 mr-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+          </div>
+          <FileText className="h-3.5 w-3.5 text-slate-400" />
+          <span className="text-xs text-slate-300 font-medium">{filename}</span>
+          <Badge
+            variant="secondary"
+            className="ml-auto text-[10px] px-2 py-0 h-5 bg-primary/15 text-primary border border-primary/20 font-semibold tracking-wide uppercase"
+          >
+            {language}
+          </Badge>
+        </div>
+      ) : (
+        <div className="absolute right-3 top-3 z-10">
+          <Badge
+            variant="secondary"
+            className="text-[10px] px-2 py-0 h-5 bg-primary/15 text-primary border border-primary/20 font-semibold tracking-wide uppercase"
+          >
             {language}
           </Badge>
         </div>
       )}
       <CopyButton text={code} label="Code" />
       <pre className="p-4 overflow-x-auto text-[13px] leading-relaxed">
-        <code className="text-gray-300">{code}</code>
+        <code className="text-slate-200">{code}</code>
       </pre>
     </div>
   )
@@ -85,7 +102,7 @@ function CodeBlock({ code, language = "python", filename }: { code: string; lang
 
 function InlineCode({ children }: { children: React.ReactNode }) {
   return (
-    <code className="px-1.5 py-0.5 rounded-md bg-muted text-[13px] font-mono text-foreground border border-border">
+    <code className="px-1.5 py-0.5 rounded-md bg-primary/10 text-[13px] font-mono text-primary border border-primary/20">
       {children}
     </code>
   )
@@ -93,16 +110,25 @@ function InlineCode({ children }: { children: React.ReactNode }) {
 
 function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="text-2xl font-bold text-foreground mt-12 mb-4 scroll-mt-24 flex items-center gap-2 group">
-      <Hash className="h-5 w-5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-      {children}
+    <h2
+      id={id}
+      className="text-[26px] font-bold text-foreground mt-12 mb-4 scroll-mt-24 flex items-center gap-2 group tracking-tight"
+    >
+      <Hash className="h-5 w-5 text-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+        {children}
+      </span>
     </h2>
   )
 }
 
 function SubHeading({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h3 id={id} className="text-lg font-semibold text-foreground mt-8 mb-3 scroll-mt-24">
+    <h3
+      id={id}
+      className="text-lg font-semibold text-foreground mt-8 mb-3 scroll-mt-24 flex items-center gap-2"
+    >
+      <span className="h-4 w-1 rounded-full bg-gradient-to-b from-primary to-primary/40" />
       {children}
     </h3>
   )
@@ -232,14 +258,19 @@ export function Documentation() {
       {/* ---- Doc Sidebar ---- */}
       <aside
         ref={sidebarRef}
-        className={`hidden xl:flex flex-col w-72 border-r border-border bg-card/50 overflow-y-auto flex-shrink-0 transition-all`}
+        className={`hidden xl:flex flex-col w-72 border-r border-border/60 bg-gradient-to-b from-card/80 via-card/40 to-card/60 overflow-y-auto flex-shrink-0 transition-all backdrop-blur-sm`}
       >
         {/* SDK Search */}
-        <div className="sticky top-0 bg-card/80 backdrop-blur-md z-10 p-3 space-y-2.5 border-b border-border">
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-2">
-            <Terminal className="h-4 w-4 text-muted-foreground" />
+        <div className="sticky top-0 bg-card/90 backdrop-blur-md z-10 p-3 space-y-2.5 border-b border-border/60">
+          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-2.5 py-2 shadow-sm">
+            <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary/15 text-primary">
+              <Terminal className="h-3.5 w-3.5" />
+            </div>
             <span className="text-xs font-semibold text-foreground">SDK Docs</span>
-            <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 h-5">
+            <Badge
+              variant="secondary"
+              className="ml-auto text-[10px] px-1.5 py-0 h-5 bg-primary/10 text-primary border-0"
+            >
               Python + Node.js
             </Badge>
           </div>
@@ -251,7 +282,7 @@ export function Documentation() {
               placeholder="Search docs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 rounded-lg border border-input bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:border-ring focus:ring-ring/50 focus:ring-[3px] outline-none transition-all"
+              className="w-full h-9 rounded-lg border border-input bg-background/80 pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 focus:ring-[3px] outline-none transition-all"
             />
           </div>
         </div>
@@ -264,26 +295,31 @@ export function Documentation() {
             if (searchQuery && filtered.length === 0) return null
             return (
               <div key={section.label}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 mb-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80 px-3 mb-1.5">
                   {section.label}
                 </p>
                 {(searchQuery ? filtered : section.items).map((item) => {
                   const Icon = item.icon
+                  const isActive = activeSection === item.id
                   return (
                     <button
                       key={item.id}
                       data-section={item.id}
                       onClick={() => scrollTo(item.id)}
                       className={`relative flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
-                        activeSection === item.id
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        isActive
+                          ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                       }`}
                     >
-                      {activeSection === item.id && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full bg-primary" />
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-gradient-to-b from-primary to-primary/40" />
                       )}
-                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <Icon
+                        className={`h-4 w-4 flex-shrink-0 transition-colors ${
+                          isActive ? "text-primary" : "text-muted-foreground/70"
+                        }`}
+                      />
                       {item.label}
                     </button>
                   )
