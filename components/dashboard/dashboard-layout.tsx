@@ -158,7 +158,8 @@ const GLOBAL_NAV_ITEMS = [
 // Project-scoped nav — shown after a project is selected.
 // API tokens and GitHub integration live inside "Project Settings".
 const PROJECT_NAV_ITEMS = [
-  { id: "overview", label: "Overview", icon: Home },
+  // Temporarily hidden from sidebar navigation as per current dashboard UX requirements.
+  // { id: "overview", label: "Overview", icon: Home },
   { id: "logs", label: "Live Logs", icon: Terminal },
   { id: "chat", label: "AI Chat", icon: MessageSquare },
   // Hidden for now — feature work in progress.

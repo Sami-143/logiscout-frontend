@@ -123,4 +123,18 @@
   body {
     @apply bg-background text-foreground;
   }
+  a[href]:not([aria-disabled="true"]),
+  button:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [data-clickable="true"]:not([aria-disabled="true"]) {
+    @apply cursor-pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    @apply cursor-not-allowed;
+  }
 }

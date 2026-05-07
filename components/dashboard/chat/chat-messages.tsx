@@ -10,6 +10,8 @@ interface ChatMessagesProps {
   messages: ChatMessage[]
   isLoading: boolean
   projectName?: string
+  onSuggestionClick?: (suggestion: string) => void
+  suggestionsDisabled?: boolean
 }
 
 function TypingIndicator() {
@@ -656,7 +658,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   )
 }
 
-export function ChatMessages({ messages, isLoading, projectName }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading, projectName, onSuggestionClick, suggestionsDisabled }: ChatMessagesProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -703,14 +705,20 @@ export function ChatMessages({ messages, isLoading, projectName }: ChatMessagesP
                 "Summarize today's incidents",
                 "What services are unhealthy?",
                 "Help me debug a 500 error",
-              ].map((suggestion) => (
-                <span
-                  key={suggestion}
-                  className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground cursor-default transition-colors"
-                >
-                  {suggestion}
-                </span>
-              ))}
+              ].map((suggestion) => {
+                const isDisabled = !!suggestionsDisabled || !onSuggestionClick
+                return (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => onSuggestionClick?.(suggestion)}
+                    disabled={isDisabled}
+                    className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground transition-all hover:bg-muted hover:text-foreground hover:border-border/80 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-background"
+                  >
+                    {suggestion}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>

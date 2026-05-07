@@ -45,6 +45,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
   const activeChatIdRef = useRef<string | null>(null)
   const closedChatsRef = useRef<Set<string>>(new Set())
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sendLockRef = useRef(false)
 
   /** Send a /close request for a chat, idempotently. */
   const closeChatSession = useCallback(
@@ -203,14 +204,17 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
   }, [])
 
   const handleSend = useCallback(
-    async (content: string) => {
-      if (!activeChatId) return
+    async (content: string, chatIdOverride?: string) => {
+      const currentChatId = chatIdOverride ?? activeChatId
+      if (!currentChatId) return
+      if (sendLockRef.current) return
+      sendLockRef.current = true
 
       // User just interacted — push the idle deadline back.
       resetIdleTimer()
 
-      const isNewChat = activeChatId.startsWith("new-")
-      let resolvedChatId: string | undefined = isNewChat ? undefined : activeChatId
+      const isNewChat = currentChatId.startsWith("new-")
+      let resolvedChatId: string | undefined = isNewChat ? undefined : currentChatId
       const tempAssistantId = `temp-assistant-${Date.now()}`
       const tempUserMessage: ChatMessage = {
         id: `temp-user-${Date.now()}`,
@@ -221,7 +225,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
 
       if (isNewChat) {
         const pendingChat: ChatSummary = {
-          id: activeChatId,
+          id: currentChatId,
           project_id: projectId,
           title: buildPendingChatTitle(content),
           message_count: 1,
@@ -229,7 +233,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
           updated_at: tempUserMessage.created_at,
         }
 
-        setChats((prev) => [pendingChat, ...prev.filter((chat) => chat.id !== activeChatId)])
+        setChats((prev) => [pendingChat, ...prev.filter((chat) => chat.id !== currentChatId)])
       }
 
       setMessages((prev) => [...prev, tempUserMessage])
@@ -263,7 +267,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
                     created_at: tempUserMessage.created_at,
                     updated_at: tempUserMessage.created_at,
                   }
-                  const remainingChats = prev.filter((chat) => chat.id !== activeChatId && chat.id !== event.chatId)
+                  const remainingChats = prev.filter((chat) => chat.id !== currentChatId && chat.id !== event.chatId)
                   return [pendingChat, ...remainingChats]
                 })
                 return
@@ -320,21 +324,39 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
         if (resolvedChatId) {
           const updatedChat = refreshedChats.find((chat) => chat.id === resolvedChatId)
           if (updatedChat) {
-            setChats((prev) => [updatedChat, ...prev.filter((chat) => chat.id !== updatedChat.id && chat.id !== activeChatId)])
+            setChats((prev) => [updatedChat, ...prev.filter((chat) => chat.id !== updatedChat.id && chat.id !== currentChatId)])
           }
           await loadChat(resolvedChatId)
         }
 
         log.info({ chatId: resolvedChatId }, "Message streamed successfully")
       } catch (error) {
-        log.error({ projectId, activeChatId, resolvedChatId, error }, "Failed to stream prompt")
+        log.error({ projectId, activeChatId: currentChatId, resolvedChatId, error }, "Failed to stream prompt")
 
         notify.error("Message failed", extractApiError(error, "Could not send your message. Your draft conversation is still open."))
       } finally {
         setSending(false)
+        sendLockRef.current = false
       }
     },
     [activeChatId, fetchChats, loadChat, projectId, resetIdleTimer]
+  )
+
+  const handleSuggestion = useCallback(
+    (suggestion: string) => {
+      if (sending || messagesLoading) return
+
+      if (!activeChatId) {
+        const newChatId = `new-${Date.now()}`
+        setActiveChatId(newChatId)
+        setMessages([])
+        void handleSend(suggestion, newChatId)
+        return
+      }
+
+      void handleSend(suggestion)
+    },
+    [activeChatId, handleSend, messagesLoading, sending]
   )
 
   return (
@@ -432,6 +454,8 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
           messages={messages}
           isLoading={messagesLoading || sending}
           projectName={projectName}
+          onSuggestionClick={handleSuggestion}
+          suggestionsDisabled={messagesLoading || sending}
         />
 
         {activeChatId ? (
