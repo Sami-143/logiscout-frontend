@@ -21,7 +21,7 @@ import {
 } from "@/components/dashboard"
 import type { Project } from "@/components/dashboard"
 import { projectAPI } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 import { clearStoredSelectedProject, setStoredSelectedProject } from "@/lib/selected-project"
 
@@ -40,7 +40,6 @@ function DashboardContent() {
   }
   
   const dispatch = useAppDispatch()
-  const { toast } = useToast()
   const { user, isAuthenticated } = useAppSelector((state) => state.auth)
 
   // Fetch dashboard data on mount
@@ -56,14 +55,10 @@ function DashboardContent() {
         })
         .catch((error) => {
           log.error({ error }, "Failed to load dashboard data")
-          toast({
-            title: "Error",
-            description: "Failed to load dashboard data",
-            variant: "destructive",
-          })
+          notify.error("Couldn't load dashboard", extractApiError(error, "Failed to load dashboard data"))
         })
     }
-  }, [isAuthenticated, dispatch, toast])
+  }, [isAuthenticated, dispatch])
 
   // Handle collaborator invite acceptance via URL param
   useEffect(() => {
@@ -76,28 +71,15 @@ function DashboardContent() {
       .then((res) => {
         if (res.success) {
           log.info("Collaborator invite accepted")
-          toast({
-            title: "Invitation accepted",
-            description: "You now have access to the shared project.",
-          })
+          notify.success("Invitation accepted", "You now have access to the shared project.")
           setProjectsRefreshKey((k) => k + 1)
         } else {
-          toast({
-            title: "Invitation issue",
-            description: res.message || "Could not accept invitation",
-            variant: "destructive",
-          })
+          notify.error("Invitation issue", res.message || "Could not accept invitation")
         }
       })
       .catch((err) => {
-        const msg =
-          err?.response?.data?.message || "Could not accept invitation"
-        log.error({ err: msg }, "Failed to accept invite")
-        toast({
-          title: "Invitation issue",
-          description: msg,
-          variant: "destructive",
-        })
+        log.error({ err }, "Failed to accept invite")
+        notify.error("Invitation issue", extractApiError(err, "Could not accept invitation"))
       })
       .finally(() => {
         // Clean the URL so refreshing doesn't retry
@@ -107,7 +89,7 @@ function DashboardContent() {
           window.history.replaceState({}, "", url.toString())
         }
       })
-  }, [isAuthenticated, searchParams, toast])
+  }, [isAuthenticated, searchParams])
 
   const handleSelectProject = (project: Project) => {
     log.info({ projectId: project.id, name: project.name }, "Project selected")

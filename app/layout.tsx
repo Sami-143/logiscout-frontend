@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ReduxProvider } from "@/lib/store/provider"
 import { ThemeProvider } from "@/components/shared/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -48,6 +49,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster />
           </ThemeProvider>
         </ReduxProvider>
         <Analytics />

@@ -39,7 +39,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import { projectAPI, type ProjectData } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("ProjectSelector")
@@ -118,7 +118,6 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const { toast } = useToast()
 
   /* Wizard state */
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -157,13 +156,13 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
         )
         log.info({ count: res.data.length }, "Projects loaded")
       }
-    } catch {
+    } catch (err) {
       log.error("Failed to load projects")
-      toast({ title: "Error", description: "Failed to load projects", variant: "destructive" })
+      notify.error("Couldn't load projects", err)
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [])
 
   useEffect(() => {
     fetchProjects()
@@ -234,9 +233,9 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
       setWizardStep("token")
 
       log.info({ projectId: project.id, name: project.name }, "Project created with token")
-    } catch {
+    } catch (err) {
       log.error({ name: newName }, "Failed to create project")
-      toast({ title: "Error", description: "Failed to create project", variant: "destructive" })
+      notify.error("Couldn't create project", err)
       setWizardStep("language") // go back so user can retry
     } finally {
       setCreating(false)
@@ -247,10 +246,10 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
     try {
       await navigator.clipboard.writeText(createdToken)
       setTokenCopied(true)
-      toast({ title: "Copied", description: "Token copied to clipboard" })
+      notify.success("Copied", "Token copied to clipboard.")
       setTimeout(() => setTokenCopied(false), 2000)
-    } catch {
-      toast({ title: "Error", description: "Failed to copy", variant: "destructive" })
+    } catch (err) {
+      notify.error("Couldn't copy", err)
     }
   }
 
@@ -272,11 +271,11 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
       if (res.success) {
         setProjects((prev) => prev.filter((p) => p.id !== id))
         log.info({ projectId: id }, "Project deleted")
-        toast({ title: "Deleted", description: "Project deleted" })
+        notify.success("Project deleted")
       }
-    } catch {
+    } catch (err) {
       log.error({ projectId: id }, "Failed to delete project")
-      toast({ title: "Error", description: "Failed to delete project", variant: "destructive" })
+      notify.error("Couldn't delete project", err)
     }
   }
 

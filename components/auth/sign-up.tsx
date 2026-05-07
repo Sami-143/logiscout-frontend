@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Zap, Eye, EyeOff, ArrowRight, Github, Mail, User, Building2, CheckCircle2 } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks"
 import { signUp, signInWithGoogle, signInWithGithub, clearError } from "@/lib/store/authSlice"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("SignUp")
@@ -32,7 +32,6 @@ export function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
   
   const dispatch = useAppDispatch()
   const router = useRouter()
-  const { toast } = useToast()
   const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth)
 
   // Clear error on component mount
@@ -51,16 +50,9 @@ export function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
     }
   }, [isAuthenticated, onSignUp, router])
 
-  // Show error toast
   useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive",
-      })
-    }
-  }, [error, toast])
+    if (error) notify.error("Sign-up failed", error)
+  }, [error])
 
   const passwordStrength = (() => {
     if (password.length === 0) return { level: 0, label: "", color: "" }
@@ -73,11 +65,7 @@ export function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!agreeTerms) {
-      toast({
-        title: "Error",
-        description: "Please agree to the terms and conditions",
-        variant: "destructive",
-      })
+      notify.error("Terms required", "Please agree to the terms and conditions to continue.")
       return
     }
     const result = await dispatch(signUp({ 

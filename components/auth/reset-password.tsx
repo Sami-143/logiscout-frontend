@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Zap, ArrowRight, ArrowLeft, KeyRound } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("ResetPassword")
@@ -16,17 +16,12 @@ export function ResetPassword() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
-  const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     if (resetToken.length !== 6) {
-      toast({
-        title: "Invalid code",
-        description: "Please enter the 6-digit reset code.",
-        variant: "destructive",
-      })
+      notify.error("Invalid code", "Please enter the 6-digit reset code.")
       return
     }
 

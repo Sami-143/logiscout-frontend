@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PanelLeftClose, PanelLeft, Zap, Sparkles } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 import { chatAPI } from "@/lib/chatApi"
 import { extractChatMessages, normalizeChatMessages } from "@/lib/chatApi"
@@ -38,7 +38,6 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
   const [chatsLoading, setChatsLoading] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const { toast } = useToast()
 
   // Refs for the close-session lifecycle — refs (not state) so the unmount
   // cleanup, idle timer, and unload handlers all see the latest values
@@ -144,17 +143,13 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
       return nextChats
     } catch (error) {
       log.error({ projectId, error }, "Failed to load chats")
-      toast({
-        title: "Unable to load chats",
-        description: "Could not fetch the chat history for this project.",
-        variant: "destructive",
-      })
+      notify.error("Unable to load chats", extractApiError(error, "Could not fetch the chat history for this project."))
       setChats([])
       return []
     } finally {
       setChatsLoading(false)
     }
-  }, [projectId, toast])
+  }, [projectId])
 
   const loadChat = useCallback(
     async (chatId: string) => {
@@ -172,16 +167,12 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
       } catch (error) {
         log.error({ projectId, chatId, error }, "Failed to load chat messages")
         setMessages([])
-        toast({
-          title: "Unable to load conversation",
-          description: "Could not fetch messages for the selected chat.",
-          variant: "destructive",
-        })
+        notify.error("Unable to load conversation", extractApiError(error, "Could not fetch messages for the selected chat."))
       } finally {
         setMessagesLoading(false)
       }
     },
-    [projectId, toast]
+    [projectId]
   )
 
   useEffect(() => {
@@ -338,16 +329,12 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
       } catch (error) {
         log.error({ projectId, activeChatId, resolvedChatId, error }, "Failed to stream prompt")
 
-        toast({
-          title: "Message failed",
-          description: "Could not send your message. Your draft conversation is still open.",
-          variant: "destructive",
-        })
+        notify.error("Message failed", extractApiError(error, "Could not send your message. Your draft conversation is still open."))
       } finally {
         setSending(false)
       }
     },
-    [activeChatId, fetchChats, loadChat, projectId, resetIdleTimer, toast]
+    [activeChatId, fetchChats, loadChat, projectId, resetIdleTimer]
   )
 
   return (

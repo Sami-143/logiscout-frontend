@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { fetchKafkaLogs, type LiveLogEntry, type LogLevel } from "@/lib/kafkaApi"
 import { createLogger } from "@/lib/logger"
 import { connectKafkaSocket } from "@/lib/kafkaSocket"
@@ -78,7 +78,6 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
   const [connectionState, setConnectionState] = useState<ConnectionState>(resolvedProjectId ? "connecting" : "idle")
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null)
   const topSentinelRef = useRef<HTMLDivElement>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     if (!projectId) {
@@ -127,11 +126,7 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
         setErrorMessage(message)
         setLogs([])
         log.error({ projectId: resolvedProjectId, error }, "Failed to load initial live logs")
-        toast({
-          title: "Live logs unavailable",
-          description: message,
-          variant: "destructive",
-        })
+        notify.error("Live logs unavailable", message)
       } finally {
         if (!isCancelled) {
           setIsLoading(false)
@@ -144,7 +139,7 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
     return () => {
       isCancelled = true
     }
-  }, [resolvedProjectId, toast])
+  }, [resolvedProjectId])
 
   useEffect(() => {
     if (!resolvedProjectId) {

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Eye, EyeOff, Lock, Shield, AlertTriangle, Loader2, KeyRound } from "lucide-react"
 import { useAppSelector } from "@/lib/store/hooks"
 import { authAPI } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("UserSettings")
@@ -100,7 +100,6 @@ function PasswordInput({
 
 export function UserSettings() {
   const { user } = useAppSelector((state) => state.auth)
-  const { toast } = useToast()
 
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -126,11 +125,10 @@ export function UserSettings() {
     e.preventDefault()
 
     if (currentPassword === newPassword) {
-      toast({
-        title: "Validation error",
-        description: "New password must be different from the current password.",
-        variant: "destructive",
-      })
+      notify.error(
+        "Choose a different password",
+        "Your new password must be different from the current one.",
+      )
       return
     }
 
@@ -146,22 +144,18 @@ export function UserSettings() {
 
       if (res.success) {
         log.info("Password updated successfully")
-        toast({
-          title: "Password updated",
-          description: "Your password has been changed successfully.",
-        })
+        notify.success("Password updated", "Your password has been changed successfully.")
         resetForm()
       }
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail
-      const message =
-        detail?.message || err?.response?.data?.message || "Failed to update password"
-      log.error({ status: err?.response?.status }, "Password update failed")
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      })
+    } catch (err: unknown) {
+      const detailMsg = (err as { response?: { data?: { detail?: { message?: string } } } })
+        ?.response?.data?.detail?.message
+      const status = (err as { response?: { status?: number } })?.response?.status
+      log.error({ status }, "Password update failed")
+      notify.error(
+        "Couldn't update password",
+        detailMsg ?? extractApiError(err, "Failed to update password"),
+      )
     } finally {
       setIsLoading(false)
     }

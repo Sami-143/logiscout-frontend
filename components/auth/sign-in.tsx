@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { Zap, Eye, EyeOff, ArrowRight, Github, Mail } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks"
 import { signIn, signInWithGoogle, signInWithGithub, clearError } from "@/lib/store/authSlice"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("SignIn")
@@ -28,7 +28,6 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
   
   const dispatch = useAppDispatch()
   const router = useRouter()
-  const { toast } = useToast()
   const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth)
 
   // Clear error on component mount
@@ -47,16 +46,11 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
     }
   }, [isAuthenticated, onSignIn, router])
 
-  // Show error toast
+  // Show error toast — notify dedupes within a short window so a re-render
+  // with the same error string won't re-fire it.
   useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive",
-      })
-    }
-  }, [error, toast])
+    if (error) notify.error("Sign-in failed", error)
+  }, [error])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

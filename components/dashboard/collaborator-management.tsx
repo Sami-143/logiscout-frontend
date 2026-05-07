@@ -52,7 +52,7 @@ import {
   Info,
 } from "lucide-react"
 import { projectAPI, type CollaboratorData } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("CollaboratorManagement")
@@ -78,7 +78,6 @@ export function CollaboratorManagement({
   const [inviting, setInviting] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
-  const { toast } = useToast()
 
   const fetchCollaborators = useCallback(async () => {
     if (!isOwner) {
@@ -93,17 +92,13 @@ export function CollaboratorManagement({
         setCollaborators(res.data)
         log.info({ projectId, count: res.data.length }, "Collaborators loaded")
       }
-    } catch {
+    } catch (err) {
       log.error({ projectId }, "Failed to load collaborators")
-      toast({
-        title: "Error",
-        description: "Failed to load collaborators",
-        variant: "destructive",
-      })
+      notify.error("Couldn't load collaborators", extractApiError(err, "Failed to load collaborators"))
     } finally {
       setLoading(false)
     }
-  }, [projectId, isOwner, toast])
+  }, [projectId, isOwner])
 
   useEffect(() => {
     fetchCollaborators()
@@ -112,11 +107,7 @@ export function CollaboratorManagement({
   const handleInvite = async () => {
     const email = inviteEmail.trim().toLowerCase()
     if (!email) {
-      toast({
-        title: "Email required",
-        description: "Please enter the email of an existing LogiScout user.",
-        variant: "destructive",
-      })
+      notify.error("Email required", "Please enter the email of an existing LogiScout user.")
       return
     }
     setInviting(true)
@@ -127,42 +118,25 @@ export function CollaboratorManagement({
       })
       if (res.success) {
         log.info({ projectId, email, role: inviteRole }, "Collaborator invited")
-        toast({
-          title: "Invitation sent",
-          description: `${email} has been invited as a ${
-            inviteRole === "edit" ? "Editor" : "Viewer"
-          }.`,
-        })
+        notify.success(
+          "Invitation sent",
+          `${email} has been invited as a ${inviteRole === "edit" ? "Editor" : "Viewer"}.`,
+        )
         setDialogOpen(false)
         setInviteEmail("")
         setInviteRole("read")
         await fetchCollaborators()
       }
     } catch (err: unknown) {
-      // Backend wraps errors as { detail: { success, message } } via HTTPException.
-      // Read both shapes so the user sees the real reason.
-      const e = err as {
-        response?: {
-          data?: {
-            message?: string
-            detail?: { message?: string } | string
-          }
-        }
-        message?: string
-      }
-      const data = e?.response?.data
+      // Backend may wrap errors as { detail: { message } } via HTTPException.
       const detailMsg =
-        typeof data?.detail === "string"
-          ? data.detail
-          : data?.detail?.message
-      const errorMsg =
-        data?.message || detailMsg || e?.message || "Failed to send invitation"
-      log.error({ projectId, email, errorMsg }, "Invite failed")
-      toast({
-        title: "Could not invite",
-        description: errorMsg,
-        variant: "destructive",
-      })
+        (err as { response?: { data?: { detail?: { message?: string } } } })
+          ?.response?.data?.detail?.message
+      log.error({ projectId, email }, "Invite failed")
+      notify.error(
+        "Could not invite",
+        detailMsg ?? extractApiError(err, "Failed to send invitation"),
+      )
     } finally {
       setInviting(false)
     }
@@ -186,15 +160,11 @@ export function CollaboratorManagement({
           )
         )
         log.info({ projectId, collaboratorId, newRole }, "Role updated")
-        toast({ title: "Role updated", description: "Access level changed." })
+        notify.success("Role updated", "Access level changed.")
       }
-    } catch {
+    } catch (err) {
       log.error({ projectId, collaboratorId }, "Role update failed")
-      toast({
-        title: "Error",
-        description: "Failed to update role",
-        variant: "destructive",
-      })
+      notify.error("Couldn't update role", extractApiError(err, "Failed to update role"))
     } finally {
       setUpdatingId(null)
     }
@@ -207,18 +177,11 @@ export function CollaboratorManagement({
       if (res.success) {
         setCollaborators((prev) => prev.filter((c) => c.id !== collaboratorId))
         log.info({ projectId, collaboratorId }, "Collaborator removed")
-        toast({
-          title: "Collaborator removed",
-          description: "They no longer have access to this project.",
-        })
+        notify.success("Collaborator removed", "They no longer have access to this project.")
       }
-    } catch {
+    } catch (err) {
       log.error({ projectId, collaboratorId }, "Remove failed")
-      toast({
-        title: "Error",
-        description: "Failed to remove collaborator",
-        variant: "destructive",
-      })
+      notify.error("Couldn't remove collaborator", extractApiError(err, "Failed to remove collaborator"))
     } finally {
       setRemovingId(null)
     }

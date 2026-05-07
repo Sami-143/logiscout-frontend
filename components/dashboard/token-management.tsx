@@ -44,7 +44,7 @@ import {
   Info,
 } from "lucide-react"
 import { projectAPI, type TokenData } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("TokenManagement")
@@ -64,7 +64,6 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
   const [newTokenValue, setNewTokenValue] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [showNewToken, setShowNewToken] = useState(false)
-  const { toast } = useToast()
 
   // Derived state
   const activeToken = tokens.find((t) => t.is_active)
@@ -82,13 +81,13 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
         setTokens(res.data)
         log.info({ projectId, count: res.data.length }, "Tokens loaded")
       }
-    } catch {
+    } catch (err) {
       log.error({ projectId }, "Failed to load tokens")
-      toast({ title: "Error", description: "Failed to load tokens", variant: "destructive" })
+      notify.error("Couldn't load tokens", err)
     } finally {
       setLoading(false)
     }
-  }, [projectId, toast])
+  }, [projectId])
 
   useEffect(() => {
     fetchTokens()
@@ -105,14 +104,9 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
         // Refresh list
         await fetchTokens()
       }
-    } catch (err: unknown) {
-      const errorMsg =
-        err && typeof err === "object" && "response" in err
-          ? ((err as Record<string, Record<string, Record<string, string>>>).response?.data?.message ??
-            "Failed to create token")
-          : "Failed to create token"
+    } catch (err) {
       log.error({ projectId }, "Failed to create token")
-      toast({ title: "Error", description: errorMsg, variant: "destructive" })
+      notify.error("Couldn't create token", err)
     } finally {
       setCreating(false)
     }
@@ -124,15 +118,12 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
       const res = await projectAPI.disableToken(projectId, tokenId)
       if (res.success) {
         log.info({ projectId, tokenId }, "Token disabled")
-        toast({
-          title: "Token Disabled",
-          description: "The token has been disabled. You can now generate a new one.",
-        })
+        notify.success("Token disabled", "You can now generate a new one.")
         await fetchTokens()
       }
-    } catch {
+    } catch (err) {
       log.error({ projectId, tokenId }, "Failed to disable token")
-      toast({ title: "Error", description: "Failed to disable token", variant: "destructive" })
+      notify.error("Couldn't disable token", err)
     } finally {
       setDisabling(null)
     }
@@ -141,7 +132,7 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
   const handleCopy = async (text: string) => {
     await navigator.clipboard.writeText(text)
     setCopied(true)
-    toast({ title: "Copied", description: "Token copied to clipboard" })
+    notify.success("Copied", "Token copied to clipboard.")
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -151,11 +142,11 @@ export function TokenManagement({ projectId, projectName }: TokenManagementProps
       if (res.success) {
         setTokens((prev) => prev.filter((t) => t.id !== tokenId))
         log.info({ projectId, tokenId }, "Token revoked")
-        toast({ title: "Revoked", description: "Token has been revoked" })
+        notify.success("Token revoked", "It can no longer be used to send logs.")
       }
-    } catch {
+    } catch (err) {
       log.error({ projectId, tokenId }, "Failed to revoke token")
-      toast({ title: "Error", description: "Failed to revoke token", variant: "destructive" })
+      notify.error("Couldn't revoke token", err)
     }
   }
 

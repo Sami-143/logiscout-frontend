@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Zap, Mail, ArrowLeft, ArrowRight } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { authAPI } from "@/lib/api"
 import { createLogger } from "@/lib/logger"
 
@@ -16,7 +16,6 @@ export function ForgotPassword() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,14 +24,17 @@ export function ForgotPassword() {
     try {
       const res = await authAPI.forgotPassword(email)
       log.info({ email }, "Forgot password request sent")
-      toast({
-        title: "Check your email",
-        description: res.message || "If that email is registered, a reset code has been sent.",
-      })
+      notify.success(
+        "Check your email",
+        res.message || "If that email is registered, a reset code has been sent.",
+      )
       router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`)
-    } catch (err: any) {
-      const message = err?.response?.data?.detail?.message || err?.response?.data?.message || "Something went wrong"
-      toast({ title: "Error", description: message, variant: "destructive" })
+    } catch (err: unknown) {
+      // The detail.message shape is specific to FastAPI's nested error
+      // payload — fall through to extractApiError for everything else.
+      const detailMsg = (err as { response?: { data?: { detail?: { message?: string } } } })
+        ?.response?.data?.detail?.message
+      notify.error("Couldn't send reset code", detailMsg ?? extractApiError(err))
     } finally {
       setIsLoading(false)
     }

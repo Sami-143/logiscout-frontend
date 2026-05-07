@@ -20,7 +20,7 @@ import {
   Eye,
 } from "lucide-react"
 import { projectAPI, type InvitationData } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("NotificationsBell")
@@ -39,7 +39,6 @@ export function NotificationsBell({
   const [invitations, setInvitations] = useState<InvitationData[]>([])
   const [loading, setLoading] = useState(false)
   const [actingId, setActingId] = useState<string | null>(null)
-  const { toast } = useToast()
 
   const fetchInvitations = useCallback(async () => {
     try {
@@ -77,25 +76,21 @@ export function NotificationsBell({
           { invitationId: invite.id, projectId: invite.project_id },
           "Invitation accepted"
         )
-        toast({
-          title: "Invitation accepted",
-          description: `You now have ${
-            invite.role === "edit" ? "Editor" : "Viewer"
-          } access to ${invite.project_name}.`,
-        })
+        notify.success(
+          "Invitation accepted",
+          `You now have ${invite.role === "edit" ? "Editor" : "Viewer"} access to ${invite.project_name}.`,
+        )
         setInvitations((prev) => prev.filter((i) => i.id !== invite.id))
         onInvitationAccepted?.()
       }
     } catch (err: unknown) {
-      const e = err as {
-        response?: { data?: { message?: string; detail?: { message?: string } } }
-      }
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data?.detail?.message ||
-        "Could not accept invitation"
+      const detailMsg = (err as { response?: { data?: { detail?: { message?: string } } } })
+        ?.response?.data?.detail?.message
       log.error({ invitationId: invite.id }, "Accept failed")
-      toast({ title: "Error", description: msg, variant: "destructive" })
+      notify.error(
+        "Couldn't accept invitation",
+        detailMsg ?? extractApiError(err, "Could not accept invitation"),
+      )
     } finally {
       setActingId(null)
     }
@@ -107,19 +102,15 @@ export function NotificationsBell({
       const res = await projectAPI.declineInvitation(invite.id)
       if (res.success) {
         log.info({ invitationId: invite.id }, "Invitation declined")
-        toast({
-          title: "Invitation declined",
-          description: `You declined the invite to ${invite.project_name}.`,
-        })
+        notify.success(
+          "Invitation declined",
+          `You declined the invite to ${invite.project_name}.`,
+        )
         setInvitations((prev) => prev.filter((i) => i.id !== invite.id))
       }
-    } catch {
+    } catch (err) {
       log.error({ invitationId: invite.id }, "Decline failed")
-      toast({
-        title: "Error",
-        description: "Could not decline invitation",
-        variant: "destructive",
-      })
+      notify.error("Couldn't decline invitation", err)
     } finally {
       setActingId(null)
     }

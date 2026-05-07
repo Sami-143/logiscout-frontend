@@ -19,7 +19,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { projectAPI } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("WebhookConfiguration")
@@ -39,7 +39,6 @@ export function WebhookConfiguration({
   const [error, setError] = useState<string | null>(null)
   const [urlCopied, setUrlCopied] = useState(false)
   const [fetchedForProject, setFetchedForProject] = useState<string | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     if (!isOpen || fetchedForProject === projectId) return
@@ -77,10 +76,10 @@ export function WebhookConfiguration({
     try {
       await navigator.clipboard.writeText(webhookUrl)
       setUrlCopied(true)
-      toast({ title: "Copied", description: "Webhook URL copied to clipboard" })
+      notify.success("Copied", "Webhook URL copied to clipboard.")
       setTimeout(() => setUrlCopied(false), 2000)
-    } catch {
-      toast({ title: "Error", description: "Failed to copy", variant: "destructive" })
+    } catch (err) {
+      notify.error("Couldn't copy", err)
     }
   }
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Zap, Eye, EyeOff, ArrowRight, ArrowLeft, Lock } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { authAPI } from "@/lib/api"
 import { createLogger } from "@/lib/logger"
 
@@ -23,7 +23,6 @@ export function ResetPasswordNew() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
   const resetToken = searchParams.get("resetToken") || ""
-  const { toast } = useToast()
 
   const passwordStrength = useMemo(() => {
     if (newPassword.length === 0) return { level: 0, label: "", color: "" }
@@ -37,17 +36,13 @@ export function ResetPasswordNew() {
     e.preventDefault()
 
     if (resetToken.length !== 6) {
-      toast({
-        title: "Missing code",
-        description: "Reset code is missing. Please complete the OTP step again.",
-        variant: "destructive",
-      })
+      notify.error("Missing code", "Reset code is missing. Please complete the OTP step again.")
       router.push(`/auth/reset-password${email ? `?email=${encodeURIComponent(email)}` : ""}`)
       return
     }
 
     if (newPassword !== confirmPassword) {
-      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" })
+      notify.error("Passwords don't match", "Make sure both fields are identical and try again.")
       return
     }
 
@@ -56,15 +51,12 @@ export function ResetPasswordNew() {
     try {
       await authAPI.resetPassword({ resetToken, newPassword, confirmPassword })
       log.info({ email }, "Password reset successful")
-      toast({
-        title: "Password updated",
-        description: "Your password has been reset successfully. Please sign in.",
-      })
+      notify.success("Password updated", "Your password has been reset successfully. Please sign in.")
       router.push("/auth/login")
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail
-      const message = detail?.message || err?.response?.data?.message || "Something went wrong"
-      toast({ title: "Error", description: message, variant: "destructive" })
+    } catch (err: unknown) {
+      const detailMsg = (err as { response?: { data?: { detail?: { message?: string } } } })
+        ?.response?.data?.detail?.message
+      notify.error("Couldn't reset password", detailMsg ?? extractApiError(err))
     } finally {
       setIsLoading(false)
     }

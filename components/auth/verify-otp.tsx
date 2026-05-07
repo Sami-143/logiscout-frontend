@@ -8,7 +8,7 @@ import { Zap, ArrowLeft, Mail, RotateCw } from "lucide-react"
 import { useAppDispatch } from "@/lib/store/hooks"
 import { verifyOtp } from "@/lib/store/authSlice"
 import { authAPI } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify, extractApiError } from "@/lib/notify"
 import { createLogger } from "@/lib/logger"
 
 const log = createLogger("VerifyOTP")
@@ -22,7 +22,6 @@ export function VerifyOTP() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useAppDispatch()
-  const { toast } = useToast()
 
   const email = searchParams.get("email") || ""
 
@@ -52,24 +51,20 @@ export function VerifyOTP() {
       try {
         const result = await dispatch(verifyOtp({ email, otp: code })).unwrap()
         log.info({ email }, "OTP verified successfully")
-        toast({
-          title: "Account Created",
-          description: result.message || "Your email has been verified!",
-        })
+        notify.success("Account created", result.message || "Your email has been verified.")
         router.push("/dashboard")
-      } catch (err: any) {
+      } catch (err: unknown) {
         log.warn({ email }, "OTP verification failed")
-        toast({
-          title: "Verification Failed",
-          description: err || "Invalid or expired code",
-          variant: "destructive",
-        })
+        // verifyOtp's rejected payload is already a string in many cases —
+        // extractApiError handles both the string and axios-error shapes.
+        const msg = typeof err === "string" ? err : extractApiError(err, "Invalid or expired code")
+        notify.error("Verification failed", msg)
         setOtp("")
       } finally {
         setIsVerifying(false)
       }
     },
-    [dispatch, email, router, toast],
+    [dispatch, email, router],
   )
 
   // Auto-submit when all 6 digits entered
@@ -84,18 +79,11 @@ export function VerifyOTP() {
     try {
       const res = await authAPI.resendOtp(email)
       log.info({ email }, "OTP resent")
-      toast({
-        title: "Code Resent",
-        description: res.message || "A new code has been sent to your email",
-      })
+      notify.success("Code resent", res.message || "A new code has been sent to your email.")
       setCooldown(30)
       setOtp("")
-    } catch {
-      toast({
-        title: "Error",
-        description: "Failed to resend code. Please try again.",
-        variant: "destructive",
-      })
+    } catch (err) {
+      notify.error("Couldn't resend code", err)
     } finally {
       setIsResending(false)
     }

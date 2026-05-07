@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useAppDispatch } from "@/lib/store/hooks"
 import { setAuthFromOAuth } from "@/lib/store/authSlice"
 import { authAPI } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notify"
 import { Spinner } from "@/components/ui/spinner"
 import { createLogger } from "@/lib/logger"
 
@@ -22,7 +22,6 @@ export function OAuthCallback() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useAppDispatch()
-  const { toast } = useToast()
   const handled = useRef(false)
 
   useEffect(() => {
@@ -43,22 +42,14 @@ export function OAuthCallback() {
 
     if (error) {
       log.warn({ provider, error }, "OAuth callback error")
-      toast({
-        title: "Authentication Error",
-        description: `Failed to sign in with ${provider}: ${error}`,
-        variant: "destructive",
-      })
+      notify.error("Sign-in failed", `Failed to sign in with ${provider}: ${error}`)
       router.push("/")
       return
     }
 
     if (!token) {
       log.warn({ provider }, "No token in OAuth callback")
-      toast({
-        title: "Authentication Error",
-        description: "No authentication token received. Please try again.",
-        variant: "destructive",
-      })
+      notify.error("Sign-in failed", "No authentication token received. Please try again.")
       router.push("/")
       return
     }
@@ -70,10 +61,7 @@ export function OAuthCallback() {
         if (response.success && response.data) {
           dispatch(setAuthFromOAuth({ user: response.data }))
           log.info({ provider }, "OAuth sign-in successful")
-          toast({
-            title: "Signed in",
-            description: `Successfully signed in with ${provider}`,
-          })
+          notify.success("Signed in", `Welcome back via ${provider}.`)
           router.push("/dashboard")
         } else {
           log.warn({ provider }, "Session exchange returned no data")
@@ -82,14 +70,10 @@ export function OAuthCallback() {
       })
       .catch(() => {
         log.warn({ provider }, "Session exchange failed")
-        toast({
-          title: "Authentication Error",
-          description: "Failed to complete sign in. Please try again.",
-          variant: "destructive",
-        })
+        notify.error("Sign-in failed", "Failed to complete sign in. Please try again.")
         router.push("/")
       })
-  }, [searchParams, dispatch, router, toast])
+  }, [searchParams, dispatch, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
