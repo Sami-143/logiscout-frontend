@@ -83,16 +83,23 @@ const SDK_DOCS: Record<
   python: {
     label: "Python",
     icon: "🐍",
-    install: "pip install logiscout",
-    usage: `from logiscout import LogiScout
+    install: "pip install logiscout-logger",
+    usage: `from logiscout_logger import init, get_logger, PROD
 
-# Initialize with your API token
-scout = LogiScout(token="YOUR_TOKEN")
+# 1. Initialize once at app startup
+init(
+    api_token="YOUR_TOKEN",
+    service_name="my-service",
+    env=PROD,
+)
 
-# Send logs
-scout.info("Payment processed", {"order_id": "12345"})
-scout.error("Payment failed", {"error": "timeout"})
-scout.warn("Rate limit approaching", {"usage": "89%"})`,
+# 2. Get a logger anywhere in your codebase
+logger = get_logger(__name__)
+
+# 3. Log structured events
+logger.info("User logged in", user_id=123)
+logger.warning("Rate limit approaching", current=95, limit=100)
+logger.error("Payment failed", order_id="abc-123", reason="insufficient_funds")`,
   },
   nodejs: {
     label: "Node.js",
@@ -129,6 +136,8 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
   const [createdProject, setCreatedProject] = useState<Project | null>(null)
   const [createdToken, setCreatedToken] = useState("")
   const [tokenCopied, setTokenCopied] = useState(false)
+  const [installCopied, setInstallCopied] = useState(false)
+  const [usageCopied, setUsageCopied] = useState(false)
 
   /* ---------------------------------------------------------------- */
   /*  Fetch projects                                                   */
@@ -187,6 +196,14 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
     setCreatedProject(null)
     setCreatedToken("")
     setTokenCopied(false)
+    setInstallCopied(false)
+    setUsageCopied(false)
+  }
+
+  const handleCopySnippet = (text: string, setCopied: (value: boolean) => void) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const handleDialogChange = (open: boolean) => {
@@ -417,6 +434,8 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
 
       /* ---- Step 4: Token + Quick-start docs ---- */
       case "token":
+        const installSnippet = SDK_DOCS[selectedLang].install
+        const usageSnippet = SDK_DOCS[selectedLang].usage.replace("YOUR_TOKEN", createdToken || "YOUR_TOKEN")
         return (
           <>
             <DialogHeader>
@@ -469,9 +488,19 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
                     <Terminal className="h-3.5 w-3.5" />
                     1. Install the SDK
                   </p>
-                  <pre className="text-xs bg-muted border border-border rounded-lg px-3 py-2 font-mono overflow-x-auto">
-                    {SDK_DOCS[selectedLang].install}
-                  </pre>
+                  <div className="flex items-start gap-2">
+                    <pre className="flex-1 text-xs bg-muted border border-border rounded-lg px-3 py-2 font-mono overflow-x-auto">
+                      {installSnippet}
+                    </pre>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="flex-shrink-0"
+                      onClick={() => handleCopySnippet(installSnippet, setInstallCopied)}
+                    >
+                      {installCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Usage */}
@@ -480,9 +509,19 @@ export function ProjectSelector({ onSelectProject, onViewDocs, refreshKey = 0 }:
                     <Code2 className="h-3.5 w-3.5" />
                     2. Initialize &amp; send logs
                   </p>
-                  <pre className="text-xs bg-muted border border-border rounded-lg px-3 py-2 font-mono overflow-x-auto whitespace-pre-wrap">
-                    {SDK_DOCS[selectedLang].usage.replace("YOUR_TOKEN", createdToken || "YOUR_TOKEN")}
-                  </pre>
+                  <div className="flex items-start gap-2">
+                    <pre className="flex-1 text-xs bg-muted border border-border rounded-lg px-3 py-2 font-mono overflow-x-auto whitespace-pre-wrap">
+                      {usageSnippet}
+                    </pre>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="flex-shrink-0"
+                      onClick={() => handleCopySnippet(usageSnippet, setUsageCopied)}
+                    >
+                      {usageCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
