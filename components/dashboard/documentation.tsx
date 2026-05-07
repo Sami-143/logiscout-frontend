@@ -116,7 +116,7 @@ function SubHeading({ id, children }: { id: string; children: React.ReactNode })
 
 const PYTHON_SIDEBAR_SECTIONS = [
   {
-    label: "Overview",
+    label: "Python Overview",
     items: [
       { id: "introduction", label: "Introduction", icon: BookOpen },
       { id: "highlights", label: "Highlights", icon: CheckCircle2 },
@@ -147,6 +147,24 @@ const PYTHON_SIDEBAR_SECTIONS = [
   },
 ]
 
+const NODEJS_SIDEBAR_SECTIONS = [
+  {
+    label: "Node.js SDK",
+    items: [
+      { id: "node-introduction", label: "Introduction", icon: BookOpen },
+      { id: "node-features", label: "Features", icon: CheckCircle2 },
+      { id: "node-installation", label: "Installation", icon: Package },
+      { id: "node-quickstart", label: "Quick Start", icon: Zap },
+      { id: "node-express", label: "Express Integration", icon: Server },
+      { id: "node-error-logging", label: "Error Logging", icon: Shield },
+      { id: "node-api-reference", label: "API Reference", icon: Code2 },
+      { id: "node-log-levels", label: "Log Levels", icon: Terminal },
+      { id: "node-console-output", label: "Console Output", icon: FileText },
+      { id: "node-requirements", label: "Requirements", icon: Package },
+    ],
+  },
+]
+
 
 /* ------------------------------------------------------------------ */
 /*  Main documentation component                                       */
@@ -159,7 +177,7 @@ export function Documentation() {
   const sidebarRef = useRef<HTMLElement>(null)
   const sectionIdsRef = useRef<string[]>([])
 
-  const activeSections = PYTHON_SIDEBAR_SECTIONS
+  const activeSections = [...PYTHON_SIDEBAR_SECTIONS, ...NODEJS_SIDEBAR_SECTIONS]
 
   useEffect(() => {
     sectionIdsRef.current = activeSections.flatMap((s) => s.items.map((i) => i.id))
@@ -222,9 +240,9 @@ export function Documentation() {
         <div className="sticky top-0 bg-card/80 backdrop-blur-md z-10 p-3 space-y-2.5 border-b border-border">
           <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-2">
             <Terminal className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-semibold text-foreground">Python SDK</span>
+            <span className="text-xs font-semibold text-foreground">SDK Docs</span>
             <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 h-5">
-              logiscout-logger
+              Python + Node.js
             </Badge>
           </div>
           {/* Search */}
@@ -287,17 +305,17 @@ export function Documentation() {
               <BookOpen className="h-4 w-4" />
               <span>Documentation</span>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-foreground font-medium">LogiScout Logger</span>
+              <span className="text-foreground font-medium">LogiScout SDKs</span>
             </div>
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
               <div>
                 <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
-                  LogiScout Logger Documentation
+                  LogiScout SDK Documentation
                 </h1>
                 <p className="mt-3 text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                  Everything you need to integrate the <strong className="text-foreground">logiscout-logger</strong> SDK
-                  into your Python services — quick start, framework integrations, batching,
-                  and the full logging API reference.
+                  Everything you need to integrate the <strong className="text-foreground">logiscout-logger</strong> (Python)
+                  and <strong className="text-foreground">logiscout</strong> (Node.js) SDKs — quick start,
+                  integrations, and API references.
                 </p>
               </div>
               <div className="flex flex-col items-start lg:items-end gap-3">
@@ -309,7 +327,7 @@ export function Documentation() {
                     onClick={() => scrollTo("api-reference")}
                   >
                     <Code2 className="h-4 w-4" />
-                    API Reference
+                    Python API Reference
                   </Button>
                   <Button
                     variant="outline"
@@ -318,7 +336,7 @@ export function Documentation() {
                     onClick={() => scrollTo("logging-workflow")}
                   >
                     <Cpu className="h-4 w-4" />
-                    How It Works
+                    Python: How It Works
                   </Button>
                   <Button
                     asChild
@@ -328,7 +346,18 @@ export function Documentation() {
                   >
                     <a href="https://github.com/Kazim68/logiscout-logger" target="_blank" rel="noreferrer">
                       <ExternalLink className="h-4 w-4" />
-                      GitHub
+                      Python GitHub
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 h-9"
+                  >
+                    <a href="https://github.com/saadakmal460/Logiscout" target="_blank" rel="noreferrer">
+                      <ExternalLink className="h-4 w-4" />
+                      Node.js GitHub
                     </a>
                   </Button>
                 </div>
@@ -1048,6 +1077,516 @@ app.wsgi_app = wsgiConfiguration(app.wsgi_app)`}
           </section>
 
           {/* ============================================================ */}
+          {/*  NODE.JS SDK — section banner                                 */}
+          {/* ============================================================ */}
+
+          <div className="mt-16 mb-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-500/10 text-green-500 flex-shrink-0">
+                <Server className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-bold text-foreground">Node.js SDK</h2>
+                  <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-500 px-2 h-5">
+                    logiscout
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">npm &middot; Node.js &gt;= 18 &middot; TypeScript &middot; Express</p>
+              </div>
+            </div>
+            <Separator />
+          </div>
+
+          {/* ============================================================ */}
+          {/*  NODE INTRODUCTION                                            */}
+          {/* ============================================================ */}
+
+          <section id="node-introduction">
+            <SectionHeading id="node-introduction-heading">Introduction</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">logiscout</strong> is a structured logging library
+              for Node.js applications with automatic correlation tracking and middleware support.
+              It produces consistent JSON-shaped logs, ships first-class Express middleware, and
+              supports both ESM and CommonJS environments.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mt-4">
+              The API mirrors the Python SDK&apos;s philosophy:{" "}
+              <InlineCode>initLogiscout()</InlineCode> once at startup, then{" "}
+              <InlineCode>createLogger(&quot;Name&quot;)</InlineCode> wherever you need to log.
+            </p>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE FEATURES                                                */}
+          {/* ============================================================ */}
+
+          <section id="node-features">
+            <SectionHeading id="node-features-heading">Features</SectionHeading>
+            <div className="mt-6 space-y-6">
+              <div className="flex gap-4 items-start">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex-shrink-0">
+                  <Layers className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Structured JSON output</h4>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Every log emits consistent JSON with timestamp, level, logger name, and metadata.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-500/10 text-green-500 flex-shrink-0">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Automatic correlation IDs</h4>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Request-scoped IDs propagate to every log emitted during a single HTTP request.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-yellow-500/10 text-yellow-500 flex-shrink-0">
+                  <Terminal className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Five log levels</h4>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    <InlineCode>debug</InlineCode>, <InlineCode>info</InlineCode>,{" "}
+                    <InlineCode>warn</InlineCode>, <InlineCode>error</InlineCode>, and{" "}
+                    <InlineCode>critical</InlineCode>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-red-500/10 text-red-500 flex-shrink-0">
+                  <Box className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Exception capture</h4>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Pass caught errors directly to <InlineCode>logger.error()</InlineCode> for
+                    full stack-trace serialization.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex-shrink-0">
+                  <Server className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Express middleware</h4>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Drop-in <InlineCode>createCorrelationMiddleware()</InlineCode> for request
+                    tracking and timing.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-purple-500/10 text-purple-500 flex-shrink-0">
+                  <Code2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Dual module support</h4>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Works with both ESM and CommonJS, ships TypeScript types and enums.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE INSTALLATION                                            */}
+          {/* ============================================================ */}
+
+          <section id="node-installation">
+            <SectionHeading id="node-installation-heading">Installation</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              Install the <InlineCode>logiscout</InlineCode> package from npm.
+            </p>
+            <CodeBlock code="npm install logiscout" language="bash" />
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE QUICK START                                             */}
+          {/* ============================================================ */}
+
+          <section id="node-quickstart">
+            <SectionHeading id="node-quickstart-heading">Quick Start</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              Three steps: initialize the SDK, create a logger, then log structured events.
+            </p>
+
+            <div className="mt-6 space-y-6">
+              {/* Step 1 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div className="w-px flex-1 bg-border mt-2" />
+                </div>
+                <div className="pb-6 flex-1">
+                  <h4 className="font-semibold text-foreground">Initialize the SDK</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Call <InlineCode>initLogiscout()</InlineCode> once at your application entry point.
+                  </p>
+                  <CodeBlock
+                    language="typescript"
+                    filename="index.ts"
+                    code={`import { Environment, initLogiscout } from "logiscout";
+
+initLogiscout({
+  projectName: "my-app",
+  environment: Environment.DEVELOPMENT,
+  apiKey: "your-api-key",
+});`}
+                  />
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex-shrink-0">
+                    2
+                  </div>
+                  <div className="w-px flex-1 bg-border mt-2" />
+                </div>
+                <div className="pb-6 flex-1">
+                  <h4 className="font-semibold text-foreground">Create a named logger</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Pass a service or module name so logs are attributable.
+                  </p>
+                  <CodeBlock
+                    language="typescript"
+                    filename="services/userService.ts"
+                    code={`import { createLogger } from "logiscout";
+
+const logger = createLogger("UserService");`}
+                  />
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex-shrink-0">
+                    3
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-foreground">Emit structured logs</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Use any of the five log levels with optional metadata and transport options.
+                  </p>
+                  <CodeBlock
+                    language="typescript"
+                    code={`logger.info("User logged in");
+logger.warn("Rate limit approaching");
+logger.error("Failed to process request");
+logger.debug("Processing user data");
+logger.critical("Database connection lost");
+
+// With structured metadata
+logger.info("User created", { userId: "123", email: "user@example.com" });
+
+// Control server transport (only active in Environment.PRODUCTION)
+logger.info("Order placed", { orderId: "789" }, { send: true });
+logger.debug("Cache state", { keys: 42 }, { send: false });`}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE EXPRESS INTEGRATION                                     */}
+          {/* ============================================================ */}
+
+          <section id="node-express">
+            <SectionHeading id="node-express-heading">Express Integration</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              The <InlineCode>createCorrelationMiddleware()</InlineCode> helper attaches a unique
+              correlation ID to every request, propagates it across logs emitted during the request
+              lifecycle, and logs request start/end with method, path, status, and timing.
+            </p>
+
+            <CodeBlock
+              language="typescript"
+              filename="server.ts"
+              code={`import express from "express";
+import {
+  Environment,
+  initLogiscout,
+  createLogger,
+  createCorrelationMiddleware,
+} from "logiscout";
+
+const app = express();
+
+initLogiscout({
+  projectName: "my-api",
+  environment: Environment.PRODUCTION,
+  apiKey: "your-api-key",
+});
+
+app.use(createCorrelationMiddleware());
+
+const logger = createLogger("API");
+
+app.get("/users", (req, res) => {
+  logger.info("Fetching users", { page: req.query.page });
+  res.json({ users: [] });
+});
+
+app.listen(3000);`}
+            />
+
+            <p className="text-muted-foreground leading-relaxed mt-4">The middleware:</p>
+            <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1.5 ml-2">
+              <li>Generates a unique correlation ID per request, or reuses an incoming <InlineCode>x-correlation-id</InlineCode> header.</li>
+              <li>Attaches the correlation ID to all logs within the request scope.</li>
+              <li>Sets the <InlineCode>x-correlation-id</InlineCode> response header.</li>
+              <li>Logs request start and end with method, path, status code, and response time.</li>
+            </ul>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE ERROR LOGGING                                           */}
+          {/* ============================================================ */}
+
+          <section id="node-error-logging">
+            <SectionHeading id="node-error-logging-heading">Error Logging with Exceptions</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              Pass a caught exception as the third argument to <InlineCode>logger.error()</InlineCode>{" "}
+              and the SDK serializes the message, name, and stack trace alongside your metadata.
+            </p>
+
+            <CodeBlock
+              language="typescript"
+              code={`try {
+  JSON.parse("{ invalid json }");
+} catch (err) {
+  logger.error("Failed to parse config", { source: "config-loader" }, err);
+}`}
+            />
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE API REFERENCE                                           */}
+          {/* ============================================================ */}
+
+          <section id="node-api-reference">
+            <SectionHeading id="node-api-reference-heading">API Reference (Node.js)</SectionHeading>
+
+            <SubHeading id="node-init-fn">initLogiscout(config)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Initialize the SDK. Must be called once before creating any loggers.
+            </p>
+
+            <div className="border border-border rounded-xl overflow-hidden mt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Parameter</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Type</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Required</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {[
+                    ["projectName", "string", "Yes", "Name of your project."],
+                    ["environment", "Environment", "Yes", "Current environment (DEVELOPMENT / STAGING / PRODUCTION)."],
+                    ["apiKey", "string", "No", "API key for server transport. Required when environment is PRODUCTION."],
+                  ].map(([param, type, required, desc]) => (
+                    <tr key={param} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-primary">{param}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{type}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{required}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="text-sm text-muted-foreground mt-4 mb-2">Available <InlineCode>Environment</InlineCode> values:</p>
+            <CodeBlock
+              language="typescript"
+              code={`Environment.DEVELOPMENT
+Environment.STAGING
+Environment.PRODUCTION`}
+            />
+
+            <SubHeading id="node-create-logger-fn">createLogger(loggerName)</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Create a named logger instance scoped to a service or module.
+            </p>
+
+            <div className="border border-border rounded-xl overflow-hidden mt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Parameter</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Type</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  <tr className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-primary">loggerName</td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">string</td>
+                    <td className="px-4 py-3 text-muted-foreground">Name identifying this logger, such as a service or module name.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <SubHeading id="node-logger-methods">Logger Methods</SubHeading>
+            <CodeBlock
+              language="typescript"
+              code={`logger.info(message, meta?, options?);
+logger.warn(message, meta?, options?);
+logger.debug(message, meta?, options?);
+logger.critical(message, meta?, options?);
+
+// error has two overloads
+logger.error(message, meta?, options?);
+logger.error(message, meta, exception, options?);`}
+            />
+
+            <div className="border border-border rounded-xl overflow-hidden mt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Parameter</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Type</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Required</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {[
+                    ["message", "string", "Yes", "The log message."],
+                    ["meta", "Record<string, unknown>", "No", "Additional structured metadata."],
+                    ["exception", "unknown", "No", "A caught exception, accepted by error()."],
+                    ["options.send", "boolean", "No", "Send to server. Default true, but only sends in Environment.PRODUCTION."],
+                  ].map(([param, type, required, desc]) => (
+                    <tr key={param} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-primary">{param}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{type}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{required}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <SubHeading id="node-correlation-fn">createCorrelationMiddleware()</SubHeading>
+            <p className="text-sm text-muted-foreground mb-3">
+              Returns Express middleware for automatic correlation tracking.
+            </p>
+            <CodeBlock
+              language="typescript"
+              code={`app.use(createCorrelationMiddleware());`}
+            />
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE LOG LEVELS                                              */}
+          {/* ============================================================ */}
+
+          <section id="node-log-levels">
+            <SectionHeading id="node-log-levels-heading">Log Levels</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              Five severity levels are available, ordered from least to most severe.
+            </p>
+
+            <div className="border border-border rounded-xl overflow-hidden mt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Level</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Severity</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Use Case</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {[
+                    ["debug", "0", "Detailed debugging information."],
+                    ["info", "1", "General operational information."],
+                    ["warn", "2", "Warning conditions."],
+                    ["error", "3", "Error conditions."],
+                    ["critical", "4", "Critical failures requiring immediate attention."],
+                  ].map(([level, severity, desc]) => (
+                    <tr key={level} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-primary">{level}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{severity}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE CONSOLE OUTPUT                                          */}
+          {/* ============================================================ */}
+
+          <section id="node-console-output">
+            <SectionHeading id="node-console-output-heading">Console Output</SectionHeading>
+            <p className="text-muted-foreground leading-relaxed">
+              Logs print to stdout in a human-readable format outside production. Metadata is
+              indented under the headline for fast scanning.
+            </p>
+            <CodeBlock
+              language="text"
+              code={`[2026-01-15T10:30:00.000Z] [INFO] [UserService] User logged in
+  userId: "user_456"`}
+            />
+          </section>
+
+          {/* ============================================================ */}
+          {/*  NODE REQUIREMENTS                                            */}
+          {/* ============================================================ */}
+
+          <section id="node-requirements">
+            <SectionHeading id="node-requirements-heading">Requirements</SectionHeading>
+            <div className="border border-border rounded-xl overflow-hidden mt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Dependency</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Version</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {[
+                    ["Node.js", ">= 18"],
+                    ["TypeScript (optional)", "5.x"],
+                  ].map(([dep, version]) => (
+                    <tr key={dep} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 text-muted-foreground">{dep}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{version}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* ============================================================ */}
           {/*  Footer                                                       */}
           {/* ============================================================ */}
 
@@ -1059,8 +1598,8 @@ app.wsgi_app = wsgiConfiguration(app.wsgi_app)`}
                 <Zap className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">LogiScout Logger</p>
-                <p className="text-xs text-muted-foreground">Python SDK Documentation</p>
+                <p className="text-sm font-semibold text-foreground">LogiScout SDKs</p>
+                <p className="text-xs text-muted-foreground">Python &middot; Node.js Documentation</p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
