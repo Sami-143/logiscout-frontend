@@ -95,7 +95,7 @@ function DashboardContent() {
     log.info({ projectId: project.id, name: project.name }, "Project selected")
     setSelectedProject(project)
     setStoredSelectedProject({ id: project.id, name: project.name })
-    setActiveView("overview") // Go to project overview first
+    setActiveView("logs") // Go straight to live logs after selecting a project
   }
 
   const handleBackToProjects = () => {
@@ -108,6 +108,10 @@ function DashboardContent() {
     if (view === "overview" && !selectedProject) {
       // If no project selected, show project selector
       setActiveView("overview")
+      return
+    }
+    if (view === "overview" && selectedProject) {
+      setActiveView("logs")
       return
     }
     setActiveView(view)
@@ -163,8 +167,9 @@ function DashboardContent() {
 
   const renderContent = () => {
     switch (activeView) {
-      case "overview":
-        return <DashboardOverview />
+      // Temporarily hidden overview view to keep project UX focused on live logs.
+      // case "overview":
+      //   return <DashboardOverview />
       case "logs":
         return <LiveLogs projectId={selectedProject?.id} projectName={selectedProject?.name} />
       case "settings":
