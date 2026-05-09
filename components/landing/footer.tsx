@@ -13,7 +13,6 @@ const FOOTER_LINKS = {
   Product: [
     { label: "Features", href: "#features" },
     { label: "How it works", href: "#how-it-works" },
-    { label: "Pricing", href: "#pricing" },
     { label: "Integrations", href: "#integrations" },
     { label: "Docs", href: "/dashboard?view=docs" },
   ],

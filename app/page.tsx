@@ -11,7 +11,6 @@ import {
   HowItWorks,
   Integrations,
   Blogs,
-  Pricing,
   Contact,
   CTA,
   Footer,
@@ -37,7 +36,6 @@ export default function LandingPage() {
       <HowItWorks />
       <Integrations />
       <Blogs />
-      <Pricing />
       <Contact />
       <CTA />
       <Footer />
