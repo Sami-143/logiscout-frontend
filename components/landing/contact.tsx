@@ -8,8 +8,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Mail, MapPin, Phone, Send, Loader2 } from "lucide-react"
 import { notify } from "@/lib/notify"
+import { createLogger } from "@/lib/logger"
+import { sendContactEmail, EmailJSConfigError } from "@/lib/emailjs"
 import { SectionHeading } from "./section-heading"
 import { FadeIn } from "./animations"
+
+const log = createLogger("LandingContact")
 
 const SUPPORT_EMAIL = "logiscoutai@gmail.com"
 const SUPPORT_PHONE = "03477586056"
@@ -35,8 +39,9 @@ export function Contact() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (sending) return
 
     const name = form.name.trim()
     const email = form.email.trim()
@@ -49,23 +54,26 @@ export function Contact() {
     if (message.length < 10) return notify.error("Message too short", "A few more words please — at least 10 characters.")
 
     setSending(true)
-
-    const body =
-      `Hi LogiScout team,\n\n${message}\n\n` +
-      `— ${name}\nReply-to: ${email}`
-
-    const mailto = `mailto:${SUPPORT_EMAIL}` +
-      `?subject=${encodeURIComponent(subject)}` +
-      `&body=${encodeURIComponent(body)}`
-
     try {
-      window.location.href = mailto
-      notify.success("Opening your mail app", `Your message is ready — just hit send.`)
+      await sendContactEmail({ name, email, subject, message })
+      notify.success("Message sent", `Thanks ${name.split(" ")[0]} — we'll reply within one working day.`)
       setForm(EMPTY_FORM)
-    } catch {
-      notify.error("Couldn't open your mail app", `Email us directly at ${SUPPORT_EMAIL}.`)
+    } catch (err) {
+      if (err instanceof EmailJSConfigError) {
+        log.error({ err }, "EmailJS not configured")
+        notify.error(
+          "Contact form not configured",
+          `Please email us directly at ${SUPPORT_EMAIL}.`,
+        )
+      } else {
+        log.error({ err }, "EmailJS send failed")
+        notify.error(
+          "Couldn't send your message",
+          `Something went wrong. Try again, or email ${SUPPORT_EMAIL} directly.`,
+        )
+      }
     } finally {
-      setTimeout(() => setSending(false), 600)
+      setSending(false)
     }
   }
 
@@ -224,7 +232,7 @@ export function Contact() {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Sending opens your default mail app pre-filled — no data is stored on our servers.
+                    Your message is delivered straight to our inbox — we don&rsquo;t store it anywhere else.
                   </p>
                 </div>
 
@@ -237,7 +245,7 @@ export function Contact() {
                   {sending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                      Opening mail…
+                      Sending…
                     </>
                   ) : (
                     <>
