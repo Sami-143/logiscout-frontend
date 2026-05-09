@@ -14,7 +14,7 @@ const FOOTER_LINKS = {
     { label: "Features", href: "/#features" },
     { label: "How it works", href: "/#how-it-works" },
     { label: "Integrations", href: "/#integrations" },
-    { label: "Docs", href: "/dashboard?view=docs" },
+    { label: "Docs", href: "/docs" },
   ],
   Company: [
     { label: "About", href: "/about" },

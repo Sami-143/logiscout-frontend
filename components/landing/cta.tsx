@@ -42,7 +42,7 @@ export function CTA() {
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </Link>
-            <Link href="/dashboard?view=docs">
+            <Link href="/docs">
               <Button variant="outline" size="lg" className="h-12 gap-2 px-8 text-base font-semibold">
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
                 Read the docs
