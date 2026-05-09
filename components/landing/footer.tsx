@@ -18,15 +18,8 @@ const FOOTER_LINKS = {
   ],
   Company: [
     { label: "About", href: "/about" },
-    { label: "Blog", href: "/blog" },
+    { label: "Blog", href: "/#insights" },
     { label: "Contact", href: "/#contact" },
-    { label: "Status", href: "/status" },
-  ],
-  Legal: [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "/terms" },
-    { label: "Security", href: "/security" },
-    { label: "DPA", href: "/dpa" },
   ],
 }
 
