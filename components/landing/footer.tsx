@@ -11,15 +11,15 @@ const SUPPORT_LOCATION = "Lahore, Pakistan"
 
 const FOOTER_LINKS = {
   Product: [
-    { label: "Features", href: "#features" },
-    { label: "How it works", href: "#how-it-works" },
-    { label: "Integrations", href: "#integrations" },
+    { label: "Features", href: "/#features" },
+    { label: "How it works", href: "/#how-it-works" },
+    { label: "Integrations", href: "/#integrations" },
     { label: "Docs", href: "/dashboard?view=docs" },
   ],
   Company: [
     { label: "About", href: "/about" },
     { label: "Blog", href: "/blog" },
-    { label: "Contact", href: "#contact" },
+    { label: "Contact", href: "/#contact" },
     { label: "Status", href: "/status" },
   ],
   Legal: [
