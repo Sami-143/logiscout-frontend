@@ -26,7 +26,7 @@ const LOG_LEVELS = {
   error: { icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/10" },
   warning: { icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-500/10" },
   info: { icon: Info, color: "text-blue-500", bg: "bg-blue-500/10" },
-  success: { icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  critical: { icon: CheckCircle2, color: "text-rose-500", bg: "bg-rose-500/10" },
 } as const
 
 const MAX_LOGS = 100
@@ -257,7 +257,7 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
               <SelectItem value="error">Error</SelectItem>
               <SelectItem value="warning">Warning</SelectItem>
               <SelectItem value="info">Info</SelectItem>
-              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
             </SelectContent>
           </Select>
 
@@ -314,7 +314,8 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
 
           {filteredLogs.map((logItem) => {
             const level = normalizeLogLevel(logItem.level)
-            const meta = LOG_LEVELS[level]
+            const levelKey = (level === "success" ? "critical" : level) as keyof typeof LOG_LEVELS
+            const meta = LOG_LEVELS[levelKey]
             const LogIcon = meta.icon
             const metadataEntries = Object.entries(logItem.metadata ?? {}).filter(
               ([key]) => !HIDDEN_METADATA_KEYS.has(normalizeMetadataKey(key)),
