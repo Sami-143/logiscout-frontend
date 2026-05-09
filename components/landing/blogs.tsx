@@ -2,66 +2,11 @@
 
 import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { BLOG_POSTS } from "@/lib/blog-posts"
 import { SectionHeading } from "./section-heading"
 import { StaggerContainer, StaggerItem } from "./animations"
-
-interface BlogPost {
-  title: string
-  excerpt: string
-  category: string
-  readTime: string
-  date: string
-  tags: string[]
-  href: string
-  featured?: boolean
-}
-
-const BLOG_POSTS: BlogPost[] = [
-  {
-    title: "MTTR math: where teams lose the most time",
-    excerpt:
-      "Investigation is the hidden tax in every incident. See how LogiScout shortens the manual loop of digging through logs, copying context, and correlating deployments.",
-    category: "Incident strategy",
-    readTime: "5 min read",
-    date: "May 2026",
-    tags: ["MTTR", "Investigation", "Workflow"],
-    href: "#contact",
-    featured: true,
-  },
-  {
-    title: "A seven-component pipeline built for signal",
-    excerpt:
-      "From SDKs to Kafka, ClickHouse, Qdrant, and the RAG server. A bird's-eye view of how LogiScout moves data from live logs to evidence-backed answers.",
-    category: "Architecture",
-    readTime: "7 min read",
-    date: "May 2026",
-    tags: ["Pipeline", "Kafka", "Qdrant"],
-    href: "#how-it-works",
-  },
-  {
-    title: "Two-phase retrieval: vector search plus raw logs",
-    excerpt:
-      "Why we combine semantic search with ClickHouse enrichment. The result is precise retrieval plus full-fidelity evidence for the LLM.",
-    category: "AI pipeline",
-    readTime: "6 min read",
-    date: "May 2026",
-    tags: ["RAG", "ClickHouse", "Evidence"],
-    href: "#integrations",
-  },
-  {
-    title: "Gatekeeper logic that keeps only 5 percent",
-    excerpt:
-      "The enrichment pipeline promotes only high-signal traces. See the tiered decision system that drops noise while preserving new or risky patterns.",
-    category: "Ingestion",
-    readTime: "6 min read",
-    date: "May 2026",
-    tags: ["Enrichment", "Gatekeeper", "Signals"],
-    href: "#features",
-  },
-]
 
 export function Blogs() {
   return (
@@ -119,15 +64,12 @@ export function Blogs() {
                   </div>
 
                   <div className="mt-4 flex items-center justify-between">
-                    <Link href={post.href} className="group/link inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    <Link href={`/blog/${post.slug}`} className="group/link inline-flex items-center gap-2 text-sm font-semibold text-primary">
                       Read story
                       <ArrowUpRight className="h-4 w-4 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" aria-hidden="true" />
                     </Link>
-                    <Link href={post.href}>
-                      <Button variant="ghost" size="sm" className="gap-2 text-xs">
-                        View details
-                        <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                      </Button>
+                    <Link href={`/blog/${post.slug}`} className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+                      Full article
                     </Link>
                   </div>
                 </div>
