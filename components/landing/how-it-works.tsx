@@ -1,93 +1,159 @@
 "use client"
 
-import { Code2, Zap, BarChart3, ArrowDown } from "lucide-react"
+import { useState } from "react"
+import { Code2, Zap, BarChart3, ArrowDown, Check, Copy, type LucideIcon } from "lucide-react"
+import { notify } from "@/lib/notify"
+import { SectionHeading } from "./section-heading"
+import { StaggerContainer, StaggerItem } from "./animations"
 
-const STEPS = [
+interface Step {
+  step: number
+  icon: LucideIcon
+  title: string
+  description: string
+  code: string
+  language: string
+}
+
+const STEPS: Step[] = [
   {
     step: 1,
     icon: Code2,
     title: "Install the SDK",
-    description: "Add the LogiScout logger to your Python or Node.js app with one command. No code changes needed.",
-    code: `pip install logiscout\n# or\nnpm install @logiscout/logger`,
+    description:
+      "Add the LogiScout logger to your Python or Node.js app with one command. No code changes needed.",
+    code: `pip install logiscout
+# or
+npm install logiscout`,
+    language: "bash",
   },
   {
     step: 2,
     icon: Zap,
     title: "Connect & Stream",
-    description: "Pass your API token and logs start flowing in real time. Auto-detect errors, warnings, and patterns.",
-    code: `from logiscout import Logger\n\nlogger = Logger(token="ls_xxx")\nlogger.info("Payment processed", amount=49.99)`,
+    description:
+      "Pass your API token and logs start flowing in real time. Auto-detect errors, warnings, and patterns.",
+    code: `from logiscout import init_logiscout, create_logger
+
+init_logiscout(project_name="my-api", api_key="lgs_xxx")
+logger = create_logger("PaymentService")
+logger.info("Payment processed", extra={"amount": 49.99})`,
+    language: "python",
   },
   {
     step: 3,
     icon: BarChart3,
     title: "Monitor & Resolve",
-    description: "Watch live logs, get AI-powered root cause suggestions, and resolve incidents — all from one dashboard.",
-    code: `# LogiScout Dashboard\n✓ Live tail streaming\n✓ AI root cause analysis\n✓ One-click incident creation`,
+    description:
+      "Watch live logs, get AI-powered root cause suggestions, and resolve incidents — all from one dashboard.",
+    code: `# LogiScout Dashboard
+✓ Live tail streaming
+✓ AI root cause analysis
+✓ One-click incident creation`,
+    language: "text",
   },
 ]
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 sm:py-32 bg-muted/30 relative">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-20">
-          <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
-            How It Works
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            From Install to Insight in Under 5 Minutes
-          </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Three simple steps to full observability. No agents, no sidecars, no YAML configs.
-          </p>
-        </div>
+    <section id="how-it-works" className="relative bg-muted/30 py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHeading
+          eyebrow="How it works"
+          title="From install to insight in under 5 minutes"
+          subtitle="Three simple steps to full observability. No agents, no sidecars, no YAML configs."
+          className="mb-20"
+        />
 
-        {/* Steps */}
-        <div className="space-y-12 md:space-y-0 md:grid md:grid-cols-3 md:gap-8 relative">
-          {/* Connecting lines (desktop) */}
-          <div className="hidden md:block absolute top-16 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-px bg-border" />
+        <div className="relative">
+          {/* desktop connecting line */}
+          <div
+            className="absolute left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] top-16 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block"
+            aria-hidden="true"
+          />
 
-          {STEPS.map((step, i) => (
-            <div key={step.step} className="relative">
-              {/* Mobile connecting arrow */}
-              {i < STEPS.length - 1 && (
-                <div className="md:hidden flex justify-center my-4">
-                  <ArrowDown className="w-5 h-5 text-muted-foreground" />
+          <StaggerContainer
+            className="space-y-12 md:grid md:grid-cols-3 md:gap-8 md:space-y-0"
+            staggerChildren={0.15}
+            amount={0.15}
+          >
+            {STEPS.map((step, i) => (
+              <StaggerItem key={step.step}>
+                <div className="relative">
+                  {i < STEPS.length - 1 && (
+                    <div className="my-4 flex justify-center md:hidden" aria-hidden="true">
+                      <ArrowDown className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+
+                  <div className="relative z-10 mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-lg font-bold text-primary-foreground shadow-lg shadow-primary/30">
+                    {step.step}
+                  </div>
+
+                  <div className="space-y-3 text-center">
+                    <div className="flex items-center justify-center gap-2 text-primary">
+                      <step.icon className="h-5 w-5" aria-hidden="true" />
+                      <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
+                    </div>
+                    <p className="mx-auto max-w-xs text-sm leading-relaxed text-muted-foreground">
+                      {step.description}
+                    </p>
+                  </div>
+
+                  <CopyableCodeBlock code={step.code} language={step.language} className="mt-6" />
                 </div>
-              )}
-
-              {/* Step number */}
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold text-lg mx-auto mb-6 relative z-10 shadow-lg shadow-primary/20">
-                {step.step}
-              </div>
-
-              {/* Content */}
-              <div className="text-center space-y-3">
-                <div className="flex items-center justify-center gap-2 text-primary">
-                  <step.icon className="w-5 h-5" />
-                  <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-                  {step.description}
-                </p>
-              </div>
-
-              {/* Code snippet */}
-              <div className="mt-6 rounded-lg border border-border bg-card overflow-hidden shadow-sm">
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/50 border-b border-border">
-                  <span className="w-2 h-2 rounded-full bg-red-400/60" />
-                  <span className="w-2 h-2 rounded-full bg-yellow-400/60" />
-                  <span className="w-2 h-2 rounded-full bg-green-400/60" />
-                </div>
-                <pre className="p-4 text-xs font-mono text-muted-foreground whitespace-pre-wrap leading-relaxed overflow-x-auto">
-                  {step.code}
-                </pre>
-              </div>
-            </div>
-          ))}
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         </div>
       </div>
     </section>
+  )
+}
+
+interface CopyableCodeBlockProps {
+  code: string
+  language: string
+  className?: string
+}
+
+function CopyableCodeBlock({ code, language, className }: CopyableCodeBlockProps) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      notify.success("Copied", "Snippet copied to your clipboard.")
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      notify.error("Couldn't copy", "Your browser blocked the clipboard write.")
+    }
+  }
+
+  return (
+    <div className={`group overflow-hidden rounded-lg border border-border bg-card shadow-sm ${className ?? ""}`}>
+      <div className="flex items-center justify-between border-b border-border bg-muted/50 px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-red-400/60" aria-hidden="true" />
+          <span className="h-2 w-2 rounded-full bg-yellow-400/60" aria-hidden="true" />
+          <span className="h-2 w-2 rounded-full bg-green-400/60" aria-hidden="true" />
+          <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            {language}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          aria-label={copied ? "Copied" : "Copy snippet"}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+        >
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+      <pre className="overflow-x-auto whitespace-pre p-4 font-mono text-xs leading-relaxed text-muted-foreground">
+        {code}
+      </pre>
+    </div>
   )
 }

@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { notify } from "@/lib/notify"
-import { fetchKafkaLogs, type LiveLogEntry, type LogLevel } from "@/lib/kafkaApi"
+import { fetchKafkaLogs, normalizeLogLevel, type LiveLogEntry, type LogLevel } from "@/lib/kafkaApi"
 import { createLogger } from "@/lib/logger"
 import { connectKafkaSocket } from "@/lib/kafkaSocket"
 import { getStoredSelectedProject } from "@/lib/selected-project"
@@ -175,7 +175,8 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
   }, [isStreaming, resolvedProjectId])
 
   const filteredLogs = logs.filter((logItem) => {
-    if (selectedLevel !== "all" && logItem.level !== selectedLevel) return false
+    const level = normalizeLogLevel(logItem.level)
+    if (selectedLevel !== "all" && level !== selectedLevel) return false
     if (selectedService !== "all" && logItem.service !== selectedService) return false
     return true
   })
@@ -312,7 +313,9 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
           )}
 
           {filteredLogs.map((logItem) => {
-            const LogIcon = LOG_LEVELS[logItem.level].icon
+            const level = normalizeLogLevel(logItem.level)
+            const meta = LOG_LEVELS[level]
+            const LogIcon = meta.icon
             const metadataEntries = Object.entries(logItem.metadata ?? {}).filter(
               ([key]) => !HIDDEN_METADATA_KEYS.has(normalizeMetadataKey(key)),
             )
@@ -324,10 +327,10 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
                 <div className="shrink-0 w-20">
                   <Badge
                     variant="outline"
-                    className={`${LOG_LEVELS[logItem.level].bg} ${LOG_LEVELS[logItem.level].color} border-transparent gap-1.5 font-medium`}
+                    className={`${meta.bg} ${meta.color} border-transparent gap-1.5 font-medium`}
                   >
                     <LogIcon className="w-3 h-3" />
-                    {logItem.level}
+                    {level}
                   </Badge>
                 </div>
 
@@ -361,8 +364,8 @@ export function LiveLogs({ projectId, projectName }: LiveLogsProps) {
           <span>{lastUpdatedAt ? `Updated ${lastUpdatedAt}` : "Waiting for logs"}</span>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-muted-foreground">{logs.filter((entry) => entry.level === "error").length} errors</span>
-          <span className="text-muted-foreground">{logs.filter((entry) => entry.level === "warning").length} warnings</span>
+          <span className="text-muted-foreground">{logs.filter((entry) => normalizeLogLevel(entry.level) === "error").length} errors</span>
+          <span className="text-muted-foreground">{logs.filter((entry) => normalizeLogLevel(entry.level) === "warning").length} warnings</span>
         </div>
       </div>
     </div>

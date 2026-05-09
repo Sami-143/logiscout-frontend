@@ -1,5 +1,5 @@
 import { createLogger } from "@/lib/logger"
-import { type LiveLogEntry } from "@/lib/kafkaApi"
+import { normalizeLogEntry, type LiveLogEntry } from "@/lib/kafkaApi"
 
 interface KafkaSocketHandlers {
   onConnecting?: () => void
@@ -42,7 +42,8 @@ export function connectKafkaSocket(
 
     socket.onmessage = (event) => {
       try {
-        handlers.onMessage(JSON.parse(event.data) as LiveLogEntry)
+        const parsed = JSON.parse(event.data)
+        handlers.onMessage(normalizeLogEntry(parsed) as LiveLogEntry)
       } catch (error) {
         log.error({ projectId, error }, "Failed to parse kafka socket message")
       }

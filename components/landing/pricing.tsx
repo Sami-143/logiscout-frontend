@@ -6,13 +6,26 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Check, ArrowRight, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SectionHeading } from "./section-heading"
+import { StaggerContainer, StaggerItem } from "./animations"
 
-const PLANS = [
+interface Plan {
+  name: string
+  description: string
+  price: string
+  period?: string
+  highlight: boolean
+  badge?: string | null
+  features: string[]
+  cta: string
+  href: string
+}
+
+const PLANS: Plan[] = [
   {
     name: "Starter",
     description: "For small teams getting started with log monitoring.",
     price: "Free",
-    period: "",
     highlight: false,
     badge: null,
     features: [
@@ -23,7 +36,8 @@ const PLANS = [
       "Community support",
       "Basic alerting",
     ],
-    cta: "Get Started Free",
+    cta: "Get started free",
+    href: "/auth/signup",
   },
   {
     name: "Pro",
@@ -42,13 +56,13 @@ const PLANS = [
       "Priority support",
       "Custom dashboards",
     ],
-    cta: "Start Free Trial",
+    cta: "Start free trial",
+    href: "/auth/signup",
   },
   {
     name: "Enterprise",
-    description: "For organizations with custom compliance and scale needs.",
+    description: "For organisations with custom compliance and scale needs.",
     price: "Custom",
-    period: "",
     highlight: false,
     badge: null,
     features: [
@@ -61,82 +75,86 @@ const PLANS = [
       "Audit logs",
       "Custom integrations",
     ],
-    cta: "Contact Sales",
+    cta: "Contact sales",
+    href: "mailto:hello@logiscout.dev",
   },
 ]
 
 export function Pricing() {
   return (
-    <section id="pricing" className="py-24 sm:py-32 bg-muted/30 relative">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
-            Pricing
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Start free, upgrade as you grow. No surprise bills, no per-seat gotchas.
-          </p>
-        </div>
+    <section id="pricing" className="relative bg-muted/30 py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHeading
+          eyebrow="Pricing"
+          title="Simple, transparent pricing"
+          subtitle="Start free, upgrade as you grow. No surprise bills, no per-seat gotchas."
+          className="mb-16"
+        />
 
-        {/* Plans */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+        <StaggerContainer
+          className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3 lg:gap-8"
+          staggerChildren={0.12}
+          amount={0.15}
+        >
           {PLANS.map((plan) => (
-            <Card
+            <StaggerItem
               key={plan.name}
-              className={cn(
-                "relative flex flex-col p-8 border-border bg-card transition-all",
-                plan.highlight && "border-primary shadow-xl shadow-primary/10 scale-[1.02] z-10",
-              )}
+              className={cn("flex", plan.highlight && "md:-translate-y-2")}
             >
-              {plan.badge && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 text-xs">
-                  <Zap className="w-3 h-3 mr-1" />
-                  {plan.badge}
-                </Badge>
-              )}
-
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-              </div>
-
-              <div className="mb-8">
-                <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                {plan.period && (
-                  <span className="text-muted-foreground ml-1">{plan.period}</span>
+              <Card
+                className={cn(
+                  "relative flex h-full w-full flex-col border-border bg-card p-8 transition-all hover:shadow-md",
+                  plan.highlight && "border-primary/60 bg-gradient-to-b from-primary/5 to-transparent shadow-xl shadow-primary/15 ring-1 ring-primary/20",
                 )}
-              </div>
+              >
+                {plan.badge && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-accent px-3 py-0.5 text-xs text-primary-foreground shadow-lg shadow-primary/25">
+                    <Zap className="mr-1 h-3 w-3" aria-hidden="true" />
+                    {plan.badge}
+                  </Badge>
+                )}
 
-              <ul className="space-y-3 mb-8 flex-1">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3 text-sm">
-                    <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+                </div>
 
-              <Link href="/auth/signup">
-                <Button
-                  className={cn(
-                    "w-full gap-2",
-                    plan.highlight
-                      ? ""
-                      : "variant-outline",
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  {plan.period && (
+                    <span className="ml-1 text-muted-foreground">{plan.period}</span>
                   )}
-                  variant={plan.highlight ? "default" : "outline"}
-                >
-                  {plan.cta}
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-            </Card>
+                </div>
+
+                <ul className="mb-8 flex-1 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3 text-sm">
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                          plan.highlight ? "bg-primary/15 text-primary" : "text-primary",
+                        )}
+                      >
+                        <Check className="h-3 w-3" aria-hidden="true" />
+                      </span>
+                      <span className="text-muted-foreground">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link href={plan.href} className="mt-auto">
+                  <Button
+                    className="w-full gap-2"
+                    variant={plan.highlight ? "default" : "outline"}
+                  >
+                    {plan.cta}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </Link>
+              </Card>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   )

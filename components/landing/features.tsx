@@ -8,9 +8,18 @@ import {
   Shield,
   Gauge,
   Code2,
+  type LucideIcon,
 } from "lucide-react"
+import { SectionHeading } from "./section-heading"
+import { StaggerContainer, StaggerItem } from "./animations"
 
-const FEATURES = [
+interface Feature {
+  icon: LucideIcon
+  title: string
+  description: string
+}
+
+const FEATURES: Feature[] = [
   {
     icon: Activity,
     title: "Real-Time Log Streaming",
@@ -21,13 +30,13 @@ const FEATURES = [
     icon: Brain,
     title: "AI Root Cause Analysis",
     description:
-      "Automatically detect anomalies, correlate across services, and pinpoint the root cause with AI — before your users notice.",
+      "Detect anomalies, correlate across services, and pinpoint the root cause with AI — before your users notice.",
   },
   {
     icon: Bell,
     title: "Smart Alerting",
     description:
-      "Set threshold-based and anomaly-based alerts. Get notified on Slack, PagerDuty, email, or webhooks within seconds.",
+      "Threshold and anomaly-based alerts delivered to Slack, PagerDuty, email, or webhooks within seconds.",
   },
   {
     icon: Shield,
@@ -39,7 +48,7 @@ const FEATURES = [
     icon: Gauge,
     title: "Dashboards & Analytics",
     description:
-      "Customizable dashboards with error rates, latency percentiles, and deployment correlations — zero config.",
+      "Customisable dashboards with error rates, latency percentiles, and deployment correlations — zero config.",
   },
   {
     icon: Code2,
@@ -51,46 +60,39 @@ const FEATURES = [
 
 export function Features() {
   return (
-    <section id="features" className="py-24 sm:py-32 relative">
-      {/* Subtle background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2" />
+    <section id="features" className="relative py-24 sm:py-32">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-0 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6">
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
-            Features
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Everything You Need to Stay On Top of Incidents
-          </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            From log ingestion to AI-powered resolution — LogiScout replaces your entire
-            observability and incident stack.
-          </p>
-        </div>
+      <div className="relative mx-auto max-w-7xl px-6">
+        <SectionHeading
+          eyebrow="Features"
+          title="Everything you need to stay on top of incidents"
+          subtitle="From log ingestion to AI-powered resolution — LogiScout replaces your entire observability and incident stack."
+          className="mb-16"
+        />
 
-        {/* Feature grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" amount={0.15}>
           {FEATURES.map((feature) => (
-            <Card
-              key={feature.title}
-              className="group p-6 border-border bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-            >
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary mb-5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                <feature.icon className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
-            </Card>
+            <StaggerItem key={feature.title}>
+              <Card className="group relative h-full overflow-hidden border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
+                <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-primary/10 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="relative">
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                    <feature.icon className="h-6 w-6" aria-hidden="true" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold text-foreground">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {feature.description}
+                  </p>
+                </div>
+              </Card>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   )
