@@ -134,8 +134,8 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
     }
   }, [closeChatSession])
 
-  const fetchChats = useCallback(async () => {
-    setChatsLoading(true)
+  const fetchChats = useCallback(async (isBackground = false) => {
+    if (!isBackground) setChatsLoading(true)
 
     try {
       const res = await chatAPI.listChats(projectId)
@@ -146,18 +146,20 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
       return nextChats
     } catch (error) {
       log.error({ projectId, error }, "Failed to load chats")
-      notify.error("Unable to load chats", extractApiError(error, "Could not fetch the chat history for this project."))
+      if (!isBackground) {
+        notify.error("Unable to load chats", extractApiError(error, "Could not fetch the chat history for this project."))
+      }
       setChats([])
       return []
     } finally {
-      setChatsLoading(false)
+      if (!isBackground) setChatsLoading(false)
     }
   }, [projectId])
 
   const loadChat = useCallback(
-    async (chatId: string) => {
+    async (chatId: string, isBackground = false) => {
       setActiveChatId(chatId)
-      setMessagesLoading(true)
+      if (!isBackground) setMessagesLoading(true)
 
       try {
         const res = await chatAPI.getChat(projectId, chatId)
@@ -170,9 +172,11 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
       } catch (error) {
         log.error({ projectId, chatId, error }, "Failed to load chat messages")
         setMessages([])
-        notify.error("Unable to load conversation", extractApiError(error, "Could not fetch messages for the selected chat."))
+        if (!isBackground) {
+          notify.error("Unable to load conversation", extractApiError(error, "Could not fetch messages for the selected chat."))
+        }
       } finally {
-        setMessagesLoading(false)
+        if (!isBackground) setMessagesLoading(false)
       }
     },
     [projectId]
@@ -357,8 +361,8 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
 
     const interval = setInterval(() => {
       if (sending || messagesLoading) return
-      void fetchChats()
-      void loadChat(activeChatId)
+      void fetchChats(true)
+      void loadChat(activeChatId, true)
     }, 15000)
 
     return () => clearInterval(interval)
