@@ -474,7 +474,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
 
         <ChatMessages
           messages={messages}
-          isLoading={messagesLoading || sending}
+          isLoading={sending || (messagesLoading && messages.length === 0)}
           projectName={projectName}
           onSuggestionClick={handleSuggestion}
           suggestionsDisabled={messagesLoading || sending}
