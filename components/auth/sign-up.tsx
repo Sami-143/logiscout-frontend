@@ -29,7 +29,8 @@ export function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword]= useState(false)
   const [agreeTerms, setAgreeTerms] = useState(false)
-  
+  const [submitted, setSubmitted] = useState(false)
+
   const dispatch = useAppDispatch()
   const router = useRouter()
   const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth)
@@ -39,16 +40,16 @@ export function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
     dispatch(clearError())
   }, [dispatch])
 
-  // Handle successful authentication
+  // Only redirect after the user actively submits this form. Authenticated
+  // visitors landing here on their own are left alone.
   useEffect(() => {
-    if (isAuthenticated) {
-      if (onSignUp) {
-        onSignUp()
-      } else {
-        router.push("/dashboard")
-      }
+    if (!submitted || !isAuthenticated) return
+    if (onSignUp) {
+      onSignUp()
+    } else {
+      router.push("/dashboard")
     }
-  }, [isAuthenticated, onSignUp, router])
+  }, [submitted, isAuthenticated, onSignUp, router])
 
   useEffect(() => {
     if (error) notify.error("Sign-up failed", error)
@@ -68,9 +69,10 @@ export function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
       notify.error("Terms required", "Please agree to the terms and conditions to continue.")
       return
     }
-    const result = await dispatch(signUp({ 
-      name: fullName, 
-      email, 
+    setSubmitted(true)
+    const result = await dispatch(signUp({
+      name: fullName,
+      email,
       password,
       company: company || undefined
     }))
@@ -84,11 +86,13 @@ export function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
 
   const handleGoogleSignUp = async () => {
     log.info("Google sign-up initiated")
+    setSubmitted(true)
     await dispatch(signInWithGoogle())
   }
 
   const handleGithubSignUp = async () => {
     log.info("GitHub sign-up initiated")
+    setSubmitted(true)
     await dispatch(signInWithGithub())
   }
 

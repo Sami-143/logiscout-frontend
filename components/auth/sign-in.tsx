@@ -25,7 +25,8 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  
+  const [submitted, setSubmitted] = useState(false)
+
   const dispatch = useAppDispatch()
   const router = useRouter()
   const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth)
@@ -35,16 +36,16 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
     dispatch(clearError())
   }, [dispatch])
 
-  // Handle successful authentication
+  // Only redirect after an actively-submitted sign-in. If the user navigates
+  // here while already authenticated, leave them on the page.
   useEffect(() => {
-    if (isAuthenticated) {
-      if (onSignIn) {
-        onSignIn()
-      } else {
-        router.push("/dashboard")
-      }
+    if (!submitted || !isAuthenticated) return
+    if (onSignIn) {
+      onSignIn()
+    } else {
+      router.push("/dashboard")
     }
-  }, [isAuthenticated, onSignIn, router])
+  }, [submitted, isAuthenticated, onSignIn, router])
 
   // Show error toast — notify dedupes within a short window so a re-render
   // with the same error string won't re-fire it.
@@ -55,16 +56,19 @@ export function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     log.info({ email }, "Sign-in form submitted")
+    setSubmitted(true)
     await dispatch(signIn({ email, password }))
   }
 
   const handleGoogleSignIn = async () => {
     log.info("Google sign-in initiated")
+    setSubmitted(true)
     await dispatch(signInWithGoogle())
   }
 
   const handleGithubSignIn = async () => {
     log.info("GitHub sign-in initiated")
+    setSubmitted(true)
     await dispatch(signInWithGithub())
   }
 

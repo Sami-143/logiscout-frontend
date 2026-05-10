@@ -2,12 +2,30 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Zap, Menu, Moon, Sun } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Zap, Menu, Moon, Sun, LayoutDashboard, LogOut, User as UserIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks"
+import { logoutAsync } from "@/lib/store/authSlice"
+
+function getInitials(name?: string, email?: string) {
+  const source = (name || email || "").trim()
+  if (!source) return "U"
+  const parts = source.split(/[\s@.]+/).filter(Boolean)
+  return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")
+}
 
 const NAV_LINKS = [
   { label: "Features", href: "/#features", id: "features" },
@@ -21,8 +39,19 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeId, setActiveId] = useState<string>("")
   const pathname = usePathname()
+  const router = useRouter()
+  const dispatch = useAppDispatch()
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+
+  const handleLogout = async () => {
+    await dispatch(logoutAsync())
+    setMobileOpen(false)
+    router.push("/")
+  }
+
+  const initials = getInitials(user?.name, user?.email).toUpperCase().slice(0, 2) || "U"
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -118,16 +147,75 @@ export function Navbar() {
             </Button>
           )}
 
-          <Link href="/auth/login" className="hidden sm:inline-flex">
-            <Button variant="ghost" size="sm">
-              Log in
-            </Button>
-          </Link>
-          <Link href="/auth/signup" className="hidden sm:inline-flex">
-            <Button size="sm" className="shadow-sm shadow-primary/25">
-              Start Free
-            </Button>
-          </Link>
+          {mounted && isAuthenticated ? (
+            <>
+              <Link href="/dashboard" className="hidden sm:inline-flex">
+                <Button size="sm" className="gap-2 shadow-sm shadow-primary/25">
+                  <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                  Dashboard
+                </Button>
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hidden h-9 w-9 rounded-full sm:inline-flex"
+                    aria-label="Account menu"
+                  >
+                    <Avatar className="h-9 w-9 ring-2 ring-border">
+                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-foreground">
+                      {user?.name || "Signed in"}
+                    </span>
+                    {user?.email && (
+                      <span className="truncate text-xs font-normal text-muted-foreground">
+                        {user.email}
+                      </span>
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="gap-2">
+                      <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/account" className="gap-2">
+                      <UserIcon className="h-4 w-4" aria-hidden="true" />
+                      Account
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/login" className="hidden sm:inline-flex">
+                <Button variant="ghost" size="sm">
+                  Log in
+                </Button>
+              </Link>
+              <Link href="/auth/signup" className="hidden sm:inline-flex">
+                <Button size="sm" className="shadow-sm shadow-primary/25">
+                  Start Free
+                </Button>
+              </Link>
+            </>
+          )}
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild className="md:hidden">
@@ -181,14 +269,48 @@ export function Navbar() {
                     {isDark ? "Light mode" : "Dark mode"}
                   </Button>
                 )}
-                <Link href="/auth/login" onClick={() => setMobileOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Log in
-                  </Button>
-                </Link>
-                <Link href="/auth/signup" onClick={() => setMobileOpen(false)}>
-                  <Button className="mt-2 w-full">Start Free</Button>
-                </Link>
+                {mounted && isAuthenticated ? (
+                  <>
+                    <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+                      <Avatar className="h-9 w-9 ring-2 ring-border">
+                        <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">{user?.name || "Signed in"}</p>
+                        {user?.email && (
+                          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                        )}
+                      </div>
+                    </div>
+                    <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
+                      <Button className="w-full gap-2">
+                        <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      onClick={handleLogout}
+                      className="mt-2 w-full gap-2 text-destructive hover:text-destructive"
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      Log out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        Log in
+                      </Button>
+                    </Link>
+                    <Link href="/auth/signup" onClick={() => setMobileOpen(false)}>
+                      <Button className="mt-2 w-full">Start Free</Button>
+                    </Link>
+                  </>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
