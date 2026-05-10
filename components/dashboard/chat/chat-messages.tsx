@@ -1,6 +1,6 @@
 "use client"
 
-import { createElement, useEffect, useRef, useState, type ReactNode } from "react"
+import { createElement, useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { toast } from "@/hooks/use-toast"
-import { Zap, User, Copy, Check, Sparkles } from "lucide-react"
+import { Zap, User, Copy, Check, Sparkles, ArrowDown } from "lucide-react"
 import type { ChatMessage } from "@/lib/chatApi"
 
 interface ChatMessagesProps {
@@ -752,12 +752,68 @@ function MessageBubble({ message, currentUserId }: { message: ChatMessage; curre
   )
 }
 
+const NEAR_BOTTOM_THRESHOLD = 120
+
 export function ChatMessages({ messages, isLoading, projectName, onSuggestionClick, suggestionsDisabled, currentUserId }: ChatMessagesProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const stickToBottomRef = useRef(true)
+  const lastMessageCountRef = useRef(messages.length)
+  const lastIsLoadingRef = useRef(isLoading)
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false)
+
+  const isNearBottom = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight <= NEAR_BOTTOM_THRESHOLD
+  }, [])
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" })
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    const near = isNearBottom()
+    stickToBottomRef.current = near
+    setShowJumpToBottom(!near && messages.length > 0)
+  }, [isNearBottom, messages.length])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages, isLoading])
+    const el = scrollRef.current
+    if (!el) return
+    el.addEventListener("scroll", handleScroll, { passive: true })
+    return () => el.removeEventListener("scroll", handleScroll)
+  }, [handleScroll])
+
+  useEffect(() => {
+    const prevCount = lastMessageCountRef.current
+    const newMessageAdded = messages.length > prevCount
+    lastMessageCountRef.current = messages.length
+
+    const startedLoading = isLoading && !lastIsLoadingRef.current
+    lastIsLoadingRef.current = isLoading
+
+    if (newMessageAdded) {
+      const last = messages[messages.length - 1]
+      if (last?.role === "user") {
+        stickToBottomRef.current = true
+        scrollToBottom(true)
+        return
+      }
+    }
+
+    if (startedLoading) {
+      stickToBottomRef.current = true
+      scrollToBottom(true)
+      return
+    }
+
+    if (stickToBottomRef.current) {
+      scrollToBottom(true)
+    }
+  }, [messages, isLoading, scrollToBottom])
 
   if (messages.length === 0 && !isLoading) {
     return (
@@ -821,14 +877,32 @@ export function ChatMessages({ messages, isLoading, projectName, onSuggestionCli
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="space-y-5 py-6">
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} currentUserId={currentUserId} />
-        ))}
-        {isLoading && <TypingIndicator />}
-        <div ref={bottomRef} />
+    <div className="relative flex-1 min-h-0">
+      <div ref={scrollRef} className="absolute inset-0 overflow-y-auto">
+        <div className="space-y-5 py-6">
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} currentUserId={currentUserId} />
+          ))}
+          {isLoading && <TypingIndicator />}
+          <div ref={bottomRef} />
+        </div>
       </div>
+
+      {showJumpToBottom && (
+        <Button
+          type="button"
+          size="icon"
+          onClick={() => {
+            stickToBottomRef.current = true
+            scrollToBottom(true)
+            setShowJumpToBottom(false)
+          }}
+          className="absolute bottom-4 right-4 h-9 w-9 rounded-full shadow-lg shadow-primary/20"
+          aria-label="Jump to latest message"
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 }
