@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -9,15 +10,17 @@ import { Zap, Menu, Moon, Sun } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_LINKS = [
-  { label: "Features", href: "#features", id: "features" },
-  { label: "How It Works", href: "#how-it-works", id: "how-it-works" },
-  { label: "Contact", href: "#contact", id: "contact" },
+  { label: "Features", href: "/#features", id: "features" },
+  { label: "How It Works", href: "/#how-it-works", id: "how-it-works" },
+  { label: "About", href: "/about", id: "about" },
+  { label: "Contact", href: "/#contact", id: "contact" },
 ]
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeId, setActiveId] = useState<string>("")
+  const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -74,26 +77,29 @@ export function Navbar() {
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => {
-            const active = activeId === link.id
-            return (
-              <a
-                key={link.href}
-                href={link.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "relative rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-                )}
-              >
+            const isRoute = link.href.startsWith("/") && !link.href.includes("#")
+            const active = isRoute ? pathname === link.href : activeId === link.id
+            const className = cn(
+              "relative rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              active
+                ? "text-foreground"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            )
+            const indicator = active && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-3 -bottom-px h-px bg-gradient-to-r from-transparent via-primary to-transparent"
+              />
+            )
+            return isRoute ? (
+              <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined} className={className}>
                 {link.label}
-                {active && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-x-3 -bottom-px h-px bg-gradient-to-r from-transparent via-primary to-transparent"
-                  />
-                )}
+                {indicator}
+              </Link>
+            ) : (
+              <a key={link.href} href={link.href} aria-current={active ? "page" : undefined} className={className}>
+                {link.label}
+                {indicator}
               </a>
             )
           })}
@@ -132,19 +138,31 @@ export function Navbar() {
             <SheetContent side="right" className="w-72 pt-12">
               <nav className="flex flex-col gap-1" aria-label="Mobile">
                 {NAV_LINKS.map((link) => {
-                  const active = activeId === link.id
-                  return (
+                  const isRoute = link.href.startsWith("/") && !link.href.includes("#")
+                  const active = isRoute ? pathname === link.href : activeId === link.id
+                  const className = cn(
+                    "rounded-lg px-4 py-3 text-base font-medium transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted",
+                  )
+                  return isRoute ? (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={className}
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
                     <a
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "rounded-lg px-4 py-3 text-base font-medium transition-colors",
-                        active
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-muted",
-                      )}
+                      className={className}
                     >
                       {link.label}
                     </a>
