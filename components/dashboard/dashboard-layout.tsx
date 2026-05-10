@@ -5,6 +5,7 @@ import React from "react"
 import type { ReactNode } from "react"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -118,6 +119,12 @@ function UserMenu({ onNavigate }: { onNavigate?: (view: string) => void }) {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/" className="cursor-pointer">
+            <Home className="mr-2 h-4 w-4" />
+            Landing page
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onNavigate?.("profile")}>
           <User className="mr-2 h-4 w-4" />
           Profile
@@ -190,8 +197,12 @@ export function DashboardLayout({ children, activeView = "overview", onNavigate,
           </Button>
 
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground">
+          <Link
+            href="/"
+            className="group flex items-center gap-3 rounded-md transition-colors hover:opacity-90"
+            aria-label="Back to LogiScout landing page"
+          >
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
               <Zap className="w-5 h-5" />
             </div>
             <div className="hidden sm:block">
@@ -202,7 +213,14 @@ export function DashboardLayout({ children, activeView = "overview", onNavigate,
                 <p className="text-[10px] text-muted-foreground leading-none">Select a project</p>
               )}
             </div>
-          </div>
+          </Link>
+
+          <Link href="/" className="hidden md:inline-flex">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
+              <Home className="h-4 w-4" aria-hidden="true" />
+              Landing
+            </Button>
+          </Link>
 
           {/* Search */}
           <div className="flex-1 max-w-md hidden md:block">
