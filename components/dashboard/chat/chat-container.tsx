@@ -340,7 +340,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
           if (updatedChat) {
             setChats((prev) => [updatedChat, ...prev.filter((chat) => chat.id !== updatedChat.id && chat.id !== currentChatId)])
           }
-          await loadChat(resolvedChatId)
+          await loadChat(resolvedChatId, true)
         }
 
         log.info({ chatId: resolvedChatId }, "Message streamed successfully")
@@ -478,7 +478,7 @@ export function ChatContainer({ projectId, projectName }: ChatContainerProps) {
 
         <ChatMessages
           messages={messages}
-          isLoading={sending || (messagesLoading && messages.length === 0)}
+          isLoading={sending}
           projectName={projectName}
           onSuggestionClick={handleSuggestion}
           suggestionsDisabled={messagesLoading || sending}
