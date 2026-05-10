@@ -67,7 +67,7 @@ const TEAM: TeamMember[] = [
   },
   {
     name: "Barr",
-    role: "Data Scientist",
+    role: "Data Engineer",
     bio: "AI and root-cause analysis. Turns weeks of historical logs into the answer you actually wanted — in one short paragraph.",
     photo: barrPhoto,
   },
